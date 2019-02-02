@@ -29,4 +29,4 @@ clean:
 	rm -Rdf $(BUILDDIR)
 
 run: build
-	@LD_LIBRARY_PATH=../lib/  $(BUILDDIR)/$(OUTPUT) b.bmp b.txt
+	@LD_LIBRARY_PATH=../lib/  $(BUILDDIR)/$(OUTPUT) a.bmp a.txt

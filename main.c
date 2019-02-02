@@ -19,7 +19,7 @@
 #define BI_CLR_USED       0x2e
 #define BI_CLR_IMPORTANT  0x32
 
-#define CHAR_SIZE_X 20 //How many pixels should form one ASCII char?
+#define CHAR_SIZE_X 10 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
 const char map[] = {' ', '.', ',', '-', '~', ':', ';', '!', '/','?' , '%', '$', '#'};
@@ -167,12 +167,12 @@ int main(int argc, char *argv[])
     for(int y = 0; y < size_y; y++)
     {
       char b = 0;
-
-
+      //Shit is seriously Fucked up around here
+      //(Brain)Cells at work
       for(int row = y * CHAR_SIZE_Y; row < (y + 1) * CHAR_SIZE_Y; row ++)
       {
         //x * CHAR_SIZE_X
-        char d[2] = {avg(CHAR_SIZE_X, ascii_buff[y]), b};
+        char d[2] = {avg(CHAR_SIZE_X, bitmap_buff[row]), b};
         b = avg(2, d);
       }
       ascii_buff[x][y] = calc_char(b);
@@ -182,6 +182,7 @@ int main(int argc, char *argv[])
   //Write Output
   printf("Opening %s for writing.\n", argv[2]);
   FILE *out = fopen(argv[2], "w");
+
   if(!out)
   {
     printf("Error opening output File. Check writing permissions.\n");
