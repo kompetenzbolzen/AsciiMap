@@ -194,8 +194,12 @@ int main(int argc, char *argv[])
     {
       fputc(ascii_buff[x][y], out);
     }
+    printf(".");
     fputc('\n', out);
   }
+  printf("\n");
+
+  printf("Finished!\n");
 
   //Cleanup
   for(int i = 0; i < biHeight; i++)
