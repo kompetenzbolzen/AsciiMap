@@ -22,7 +22,7 @@
 #define CHAR_SIZE_X 10 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
-const char map[] = {' ', '.', ',', '-', '~', ':', ';', '!', '/','?' , '%', '$', '#'};
+const char map[] = {' ', '.', ',', '-', '~', ':', ';', '!', '/','?', '%', '$', '#'};
 
 //Routine for flipping bytes
 uint32_t flip(unsigned char* _v, int _c);
@@ -166,16 +166,19 @@ int main(int argc, char *argv[])
   {
     for(int y = 0; y < size_y; y++)
     {
-      char b = 0;
-      //Shit is seriously Fucked up around here
-      //(Brain)Cells at work
-      for(int row = y * CHAR_SIZE_Y; row < (y + 1) * CHAR_SIZE_Y; row ++)
+      char b[CHAR_SIZE_X][CHAR_SIZE_Y];
+
+      for(int r = 0; r < CHAR_SIZE_Y; r++)
       {
-        //x * CHAR_SIZE_X
-        char d[2] = {avg(CHAR_SIZE_X, bitmap_buff[row]), b};
-        b = avg(2, d);
+        int row = y * CHAR_SIZE_Y + r;
+        for(int c = 0; c < CHAR_SIZE_X; c++)
+        {
+          int col = x * CHAR_SIZE_X + c;
+          b[c][r] = avg(3, (char*)&bitmap_buff[row][col]);
+        }
       }
-      ascii_buff[x][y] = calc_char(b);
+
+      ascii_buff[x][y] = calc_char(avg(CHAR_SIZE_X * CHAR_SIZE_Y, &b));
     }
   }
 
@@ -235,6 +238,7 @@ char avg(int argc, char *argv)
   for(int i = 0; i < argc; i++)
     sum += (uint64_t)argv[i];
 
+
   ret = (char)(sum / argc);
 
   return ret;
@@ -242,6 +246,6 @@ char avg(int argc, char *argv)
 
 char calc_char(uint8_t _c)
 {
-  float c = (float)_c / 255.0;
+  float c = (float)(_c) / 255.0;
   return map [(int)(sizeof(map) * c)];
 }
