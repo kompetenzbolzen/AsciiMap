@@ -19,16 +19,20 @@
 #define BI_CLR_USED       0x2e
 #define BI_CLR_IMPORTANT  0x32
 
-#define CHAR_SIZE_X 10 //How many pixels should form one ASCII char?
+#define CHAR_SIZE_X 5 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
-const char map[] = {' ', '.', ',', '-', '~', ':', ';', '!', '/','?', '%', '$', '#'};
+const char map[] = {' ', '.', ',', '-', '*', '~', ':', ';', '<', '!', '/','?', '%', '=', '$', '#'};
 
 //Routine for flipping bytes
 uint32_t flip(unsigned char* _v, int _c);
 
 //Calculate average
 char avg(int argc, char *argv);
+
+//Calculate luminance from rgb_avg
+//Order LSB first: BGR
+char rgb_avg(uint32_t *arg);
 
 //Select Char based on 1B brightness Value
 char calc_char(uint8_t _c);
@@ -117,11 +121,11 @@ int main(int argc, char *argv[])
   //Read to start of Pixel block
   //This block contains Colormasks and Colortables.
   //Unused
-  uint32_t d = bfOffBits - read_counter;
-  tables = malloc(sizeof(char)* d);
-  fread(tables, sizeof(char), d, bitmap);
-  read_counter += d;
-  printf("Read to %x\n", read_counter);
+  uint32_t haeder_end = bfOffBits - read_counter;
+  tables = malloc(sizeof(char)* haeder_end);
+  fread(tables, sizeof(char), haeder_end, bitmap);
+  read_counter += haeder_end;
+  printf("Data starts at %x\n", read_counter);
 
   //One pixel is 3Byte, One line is multiple of 4Bytes
   uint32_t row_size = biWidth * 3;
@@ -174,11 +178,12 @@ int main(int argc, char *argv[])
         for(int c = 0; c < CHAR_SIZE_X; c++)
         {
           int col = x * CHAR_SIZE_X + c;
-          b[c][r] = avg(3, (char*)&bitmap_buff[row][col]);
+          //b[c][r] = avg(3, (char*)&bitmap_buff[row][col]);
+          b[c][r] = rgb_avg(&bitmap_buff[row][col]);
         }
       }
 
-      ascii_buff[x][y] = calc_char(avg(CHAR_SIZE_X * CHAR_SIZE_Y, &b));
+      ascii_buff[x][y] = calc_char( avg(CHAR_SIZE_X * CHAR_SIZE_Y, (char*)&b) );
     }
   }
 
@@ -242,10 +247,20 @@ char avg(int argc, char *argv)
   ret = (char)(sum / argc);
 
   return ret;
-}//flip
+}//avg
 
 char calc_char(uint8_t _c)
 {
   float c = (float)(_c) / 255.0;
-  return map [(int)(sizeof(map) * c)];
+  return map [(int)((sizeof(map)-1) * c) ];
+}
+
+char rgb_avg(uint32_t *arg)
+{
+  char ret;
+  uint32_t R = (*arg & 0xff0000)>>16;;
+  uint32_t G = (*arg & 0xff00)>>8;
+  uint32_t B = *arg & 0xff;
+  ret = (char)(R+R+B+G+G+G)/6;
+  return ret;
 }

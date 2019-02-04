@@ -4,6 +4,8 @@ LDFLAGS =
 OUTPUT = bitmap
 BUILDDIR = build
 
+FILE = 02
+
 OBJ = main.o
 
 build: $(OBJ)
@@ -29,4 +31,4 @@ clean:
 	rm -Rdf $(BUILDDIR)
 
 run: build
-	@LD_LIBRARY_PATH=../lib/  $(BUILDDIR)/$(OUTPUT) a.bmp a.txt
+	$(BUILDDIR)/$(OUTPUT) $(FILE).bmp $(FILE).txt
