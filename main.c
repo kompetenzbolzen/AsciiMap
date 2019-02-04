@@ -19,11 +19,11 @@
 #define BI_CLR_USED       0x2e
 #define BI_CLR_IMPORTANT  0x32
 
-#define CHAR_SIZE_X 5 //How many pixels should form one ASCII char?
+#define CHAR_SIZE_X 2 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
-const char map[] = {' ', '.', ',', '-', '*', '~', ':', ';', '<', '!', '/','?', '%', '=', '$', '#'};
-
+const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*',  ':', ';', '<', '!', '/','?', '%', '&', '=', '$', '#'};
+//const char map[] = {'`', '.', ',', ':', ';', '\'', '+', '#', '@'};
 //Routine for flipping bytes
 uint32_t flip(unsigned char* _v, int _c);
 
@@ -35,7 +35,7 @@ char avg(int argc, char *argv);
 char rgb_avg(uint32_t *arg);
 
 //Select Char based on 1B brightness Value
-char calc_char(uint8_t _c);
+char calc_char(uint8_t _c, uint8_t _min, uint8_t _max);
 
 int main(int argc, char *argv[])
 {
@@ -44,6 +44,9 @@ int main(int argc, char *argv[])
   uint32_t      **bitmap_buff;
   char          **ascii_buff;
   uint32_t      read_counter = 0;
+
+  uint8_t b_max = 0x00;
+  uint8_t b_min = 0xff;
 
   uint16_t bfType         = 0;
   uint32_t bfSize         = 0;
@@ -136,17 +139,22 @@ int main(int argc, char *argv[])
   //If biHeight > 0 Data starts with last row!!
 
   //Allocate 2D array
+  //!!
+  //bitmap_buff indeces are flipped!! [y][x]!!!!!
   bitmap_buff = malloc(sizeof(*bitmap_buff) * biHeight);
   for(int i = 0; i < biHeight; i++)
   {
     bitmap_buff[i] = malloc(sizeof(*bitmap_buff[i]) * biWidth);
   }
 
-  //Copy Bitmap
+  //Copy Bitmap into bitmap_buff
   for(int row = 0; row < biHeight; row++)
   {
     //printf("Row %i\n", row);
-    fread(bitmap_buff[row], sizeof(char), row_size, bitmap);
+    //fread(bitmap_buff[row], sizeof(char), row_size, bitmap);
+    for(int col = 0; col < biWidth; col++)
+      fread(&bitmap_buff[row][col], 1, 3, bitmap);
+
     read_counter += row_size;
   }
 
@@ -183,9 +191,16 @@ int main(int argc, char *argv[])
         }
       }
 
-      ascii_buff[x][y] = calc_char( avg(CHAR_SIZE_X * CHAR_SIZE_Y, (char*)&b) );
+      ascii_buff[x][y] = avg(CHAR_SIZE_X * CHAR_SIZE_Y, (char*)&b);
+
+      if((uint8_t)ascii_buff[x][y] < b_min)
+        b_min = ascii_buff[x][y];
+      if((uint8_t)ascii_buff[x][y] > b_max)
+        b_max = ascii_buff[x][y];
     }
   }
+
+  printf("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 
   //Write Output
   printf("Opening %s for writing.\n", argv[2]);
@@ -201,7 +216,7 @@ int main(int argc, char *argv[])
   {
     for(int x = 0; x < size_x; x++)
     {
-      fputc(ascii_buff[x][y], out);
+      fputc( calc_char(ascii_buff[x][y], b_min, b_max) , out);
     }
     printf(".");
     fputc('\n', out);
@@ -214,6 +229,10 @@ int main(int argc, char *argv[])
   for(int i = 0; i < biHeight; i++)
     free (bitmap_buff[i]);
   free(bitmap_buff);
+
+  for(int i = 0; i < size_y; i++)
+    free (ascii_buff[i]);
+  free(ascii_buff);
 
   fclose(bitmap);
   fclose(out);
@@ -249,10 +268,10 @@ char avg(int argc, char *argv)
   return ret;
 }//avg
 
-char calc_char(uint8_t _c)
+char calc_char(uint8_t _c , uint8_t _min, uint8_t _max)
 {
-  float c = (float)(_c) / 255.0;
-  return map [(int)((sizeof(map)-1) * c) ];
+  float c = (float)(_c) / (_max - _min);
+  return map [(int)((sizeof(map)-1) * (1-c)) ];
 }
 
 char rgb_avg(uint32_t *arg)
