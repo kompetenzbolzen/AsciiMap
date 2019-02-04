@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
 
 #define _HEADER_SIZE 54 //Fileheader + infoheader
@@ -10,6 +11,7 @@
 #define BF_TYPE           0x00
 #define BF_SIZE           0x02
 #define BF_OFF_BITS       0x0a
+
 #define BI_SIZE           0x0e
 #define BI_WIDTH          0x12
 #define BI_HEIGHT         0x16
@@ -22,8 +24,8 @@
 #define CHAR_SIZE_X 2 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
-const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*',  ':', ';', '<', '!', '/','?', '%', '&', '=', '$', '#'};
-//const char map[] = {'`', '.', ',', ':', ';', '\'', '+', '#', '@'};
+const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
+//const char map[] = {' ', '`', '.', ',', ':', ';', '\'', '+', '#', '@'};
 //Routine for flipping bytes
 uint32_t flip(unsigned char* _v, int _c);
 
@@ -120,6 +122,11 @@ int main(int argc, char *argv[])
     printf("Compression not supported.\n");
     return 1;
   }
+  if(biClrUsed != 0)
+  {
+    printf("Colortable not supported.\n");
+    return 1;
+  }
 
   //Read to start of Pixel block
   //This block contains Colormasks and Colortables.
@@ -154,6 +161,9 @@ int main(int argc, char *argv[])
     //fread(bitmap_buff[row], sizeof(char), row_size, bitmap);
     for(int col = 0; col < biWidth; col++)
       fread(&bitmap_buff[row][col], 1, 3, bitmap);
+
+    for(int i = 0; i < row_size - (biWidth * 3); i++) //read excess NULL-Bytes
+        fgetc(bitmap);
 
     read_counter += row_size;
   }
@@ -238,8 +248,8 @@ int main(int argc, char *argv[])
   fclose(out);
 
   return 0;
-}
-//One pixel is 3Byte, One line is multiple of 4Bytes
+}//main
+
 uint32_t flip(unsigned char* _v, int _c)
 {
   uint32_t ret = 0;
@@ -262,7 +272,6 @@ char avg(int argc, char *argv)
   for(int i = 0; i < argc; i++)
     sum += (uint64_t)argv[i];
 
-
   ret = (char)(sum / argc);
 
   return ret;
@@ -271,15 +280,17 @@ char avg(int argc, char *argv)
 char calc_char(uint8_t _c , uint8_t _min, uint8_t _max)
 {
   float c = (float)(_c) / (_max - _min);
-  return map [(int)((sizeof(map)-1) * (1-c)) ];
+  return map [(int)((sizeof(map)-1) * (c))];
 }
 
 char rgb_avg(uint32_t *arg)
 {
   char ret;
   uint32_t R = (*arg & 0xff0000)>>16;;
-  uint32_t G = (*arg & 0xff00)>>8;
-  uint32_t B = *arg & 0xff;
-  ret = (char)(R+R+B+G+G+G)/6;
+  uint32_t G = (*arg & 0x00ff00)>>8;
+  uint32_t B =  *arg & 0x0000ff;
+
+  ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
+
   return ret;
 }

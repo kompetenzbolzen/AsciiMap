@@ -1,3 +1,3 @@
 # AsciiMap
 
-Converts windows BitMap files to ASCII
+Converts 24bit Windows BitMap files to ASCII

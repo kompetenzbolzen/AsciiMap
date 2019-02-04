@@ -1,10 +1,10 @@
 CC      = /usr/bin/gcc
 CFLAGS  = -Wall -g
-LDFLAGS =
+LDFLAGS = -lm
 OUTPUT = bitmap
 BUILDDIR = build
 
-FILE = 02
+FILE = a
 
 OBJ = main.o
 
