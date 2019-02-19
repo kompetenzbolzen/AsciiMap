@@ -13,7 +13,7 @@ build: $(OBJ)
 	$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
 
 debug: build
-	gdb $(BUILDDIR)/$(OUTPUT) a.bmp
+	gdb $(BUILDDIR)/$(OUTPUT)
 
 %.o: %.c
 	@echo

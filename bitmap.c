@@ -20,6 +20,7 @@ struct bitmap_pixel_data bitmap_read(char *_file)
   struct bitmap_file_header header;
 
   ret.R = ret.G = ret.B = NULL;
+  ret.error = 1;
 
   FILE *bitmap = fopen(_file,"r");
 
@@ -41,6 +42,7 @@ struct bitmap_pixel_data bitmap_read(char *_file)
 
   fclose(bitmap);
 
+  ret.error = 0;
   return ret;
 }
 
@@ -129,7 +131,7 @@ struct bitmap_pixel_data bitmap_read_pixel_data(FILE *_file, struct bitmap_file_
   ret.R = malloc(sizeof(*ret.R) * ret.x);
   ret.G = malloc(sizeof(*ret.G) * ret.x);
   ret.B = malloc(sizeof(*ret.B) * ret.x);
-  for(int i = 0; i < ret.y; i++)
+  for(int i = 0; i < ret.x; i++)
   {
     ret.R[i] = malloc(sizeof(*ret.R[i]) * ret.y);
     ret.G[i] = malloc(sizeof(*ret.G[i]) * ret.y);

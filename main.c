@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#include "bitmap.h"
+
 
 #define _HEADER_SIZE 54 //Fileheader + infoheader
 #define IDENTIFIER 0x424d //BM BitMap identifier
@@ -27,41 +29,25 @@
 const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
 //const char map[] = {' ', '`', '.', ',', ':', ';', '\"', '+', '#', '@'};
 //Routine for flipping bytes
-uint32_t flip(unsigned char* _v, int _c);
 
 //Calculate average
 char avg(int argc, char *argv);
 
 //Calculate luminance from rgb_avg
 //Order LSB first: BGR
-char rgb_avg(uint32_t *arg);
+char rgb_avg(uint8_t R, uint8_t G, uint8_t B);
 
 //Select Char based on 1B brightness Value
 char calc_char(uint8_t _c, uint8_t _min, uint8_t _max);
 
 int main(int argc, char *argv[])
 {
-  unsigned char fileheader[_HEADER_SIZE];
-  unsigned char *tables;
-  uint32_t      **bitmap_buff;
   char          **ascii_buff;
-  uint32_t      read_counter = 0;
 
   uint8_t b_max = 0x00;
   uint8_t b_min = 0xff;
 
-  uint16_t bfType         = 0;
-  uint32_t bfSize         = 0;
-  uint32_t bfOffBits      = 0;
-
-  uint32_t biSize         = 0;
-  int32_t  biWidth        = 0;
-  int32_t  biHeight       = 0;
-  uint16_t biBitCount     = 0;
-  uint32_t biCompression  = 0;
-  uint32_t biSizeImage    = 0;
-  uint32_t biClrUsed      = 0;
-  uint32_t biClrImportant = 0;
+  struct bitmap_pixel_data bitmap;
 
   if(argc != 3)
   {
@@ -69,111 +55,18 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  printf("Opening %s\n", argv[1]);
+  bitmap = bitmap_read(argv[1]);
 
-  FILE *bitmap;
-  bitmap = fopen(argv[1], "r");
-
-  if(bitmap==NULL)
+  if(bitmap.error)
   {
-    printf("Error opening file. Abort.\n");
+    printf("Error reading file");
     return 1;
   }
-
-  size_t tt = fread((void*)&fileheader, sizeof(char), _HEADER_SIZE, bitmap);
-  read_counter += _HEADER_SIZE;
-
-  if(!tt)
-  {
-    printf("Error reading file. Abort.\n");
-    return 1;
-  }
-
-  //Copy file header
-  bfType =          (uint16_t) flip(&fileheader[BF_TYPE], sizeof(bfType));
-
-  if(bfType != (uint16_t)IDENTIFIER)
-  {
-    printf("%s is not a valid Bitmap. Abort.\n", argv[1]);
-    fclose(bitmap);
-    return 1;
-  }
-
-  bfSize =          (uint32_t) flip(&fileheader[BF_SIZE], sizeof(bfSize));
-  bfOffBits =      *(uint32_t*) &fileheader[BF_OFF_BITS];
-  biSize =         *(uint32_t*) &fileheader[BI_SIZE];
-  biWidth =        *(int32_t*) &fileheader[BI_WIDTH];
-  biHeight =       *(int32_t*) &fileheader[BI_HEIGHT];
-  biBitCount =     *(uint16_t*) &fileheader[BI_BIT_COUNT];
-  biCompression =   (uint32_t) flip(&fileheader[BI_COMPRESSION], sizeof(biCompression));
-  biSizeImage =    *(uint32_t*) &fileheader[BI_SIZE_IMAGE];
-  biClrUsed =       (uint32_t) flip(&fileheader[BI_CLR_USED], sizeof(biClrUsed));
-  biClrImportant =  (uint32_t) flip(&fileheader[BI_CLR_IMPORTANT], sizeof(biClrImportant));
-
-  printf("Picture is %u x %u Pixels. Colordepth: %ubit. Size: %uB\n",biWidth, biHeight, biBitCount, biSizeImage);
-
-  if(biBitCount !=24)
-  {
-    printf("%ubit mode not supported.\n", biBitCount);
-    return 1;
-  }
-  if(biCompression != 0)
-  {
-    printf("Compression not supported.\n");
-    return 1;
-  }
-  if(biClrUsed != 0)
-  {
-    printf("Colortable not supported.\n");
-    return 1;
-  }
-
-  //Read to start of Pixel block
-  //This block contains Colormasks and Colortables.
-  //Unused
-  uint32_t haeder_end = bfOffBits - read_counter;
-  tables = malloc(sizeof(char)* haeder_end);
-  fread(tables, sizeof(char), haeder_end, bitmap);
-  read_counter += haeder_end;
-  printf("Data starts at %x\n", read_counter);
-
-  //One pixel is 3Byte, One line is multiple of 4Bytes
-  uint32_t row_size = biWidth * 3;
-  while(row_size%4)
-    row_size++;
-
-  printf("Set row reading size to %uB\n", row_size);
-  //If biHeight > 0 Data starts with last row!!
-
-  //Allocate 2D array
-  //!!
-  //bitmap_buff indeces are flipped!! [y][x]!!!!!
-  bitmap_buff = malloc(sizeof(*bitmap_buff) * biHeight);
-  for(int i = 0; i < biHeight; i++)
-  {
-    bitmap_buff[i] = malloc(sizeof(*bitmap_buff[i]) * biWidth);
-  }
-
-  //Copy Bitmap into bitmap_buff
-  for(int row = 0; row < biHeight; row++)
-  {
-    //printf("Row %i\n", row);
-    //fread(bitmap_buff[row], sizeof(char), row_size, bitmap);
-    for(int col = 0; col < biWidth; col++)
-      fread(&bitmap_buff[row][col], 1, 3, bitmap);
-
-    for(int i = 0; i < row_size - (biWidth * 3); i++) //read excess NULL-Bytes
-        fgetc(bitmap);
-
-    read_counter += row_size;
-  }
-
-  printf("Finished copying Bitmap\n");
 
   //Calculate Averages of CHAR_SIZE x CHAR_SIZE blocks
   unsigned int size_x,size_y;
-  size_x = biWidth  / CHAR_SIZE_X;
-  size_y = biHeight / CHAR_SIZE_Y;
+  size_x = bitmap.x  / CHAR_SIZE_X;
+  size_y = bitmap.y / CHAR_SIZE_Y;
 
   printf("Creating ASCII File %u x %u\n", size_x, size_y);
 
@@ -197,7 +90,7 @@ int main(int argc, char *argv[])
         {
           int col = x * CHAR_SIZE_X + c;
           //b[c][r] = avg(3, (char*)&bitmap_buff[row][col]);
-          b[c][r] = rgb_avg(&bitmap_buff[row][col]);
+          b[c][r] = rgb_avg(bitmap.R[col][row],bitmap.G[col][row],bitmap.B[col][row]);
         }
       }
 
@@ -222,7 +115,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  for(int y = size_y; y >= 0; y--)
+  for(int y = 0; y<size_y; y++)
   {
     for(int x = 0; x < size_x; x++)
     {
@@ -236,33 +129,17 @@ int main(int argc, char *argv[])
   printf("Finished!\n");
 
   //Cleanup
-  for(int i = 0; i < biHeight; i++)
-    free (bitmap_buff[i]);
-  free(bitmap_buff);
+
 
   for(int i = 0; i < size_y; i++)
     free (ascii_buff[i]);
   free(ascii_buff);
 
-  fclose(bitmap);
   fclose(out);
 
   return 0;
 }//main
 
-uint32_t flip(unsigned char* _v, int _c)
-{
-  uint32_t ret = 0;
-  uint32_t counter = (_c-1) * 8;
-
-  for(int i = 0; i < _c; i++)
-  {
-    ret |= (uint32_t)(_v[i] << (counter));
-    counter -= 8;
-  }
-
-  return ret;
-}//flip
 
 char avg(int argc, char *argv)
 {
@@ -283,12 +160,9 @@ char calc_char(uint8_t _c , uint8_t _min, uint8_t _max)
   return map [(int)((sizeof(map)-1) * (c))];
 }
 
-char rgb_avg(uint32_t *arg)
+char rgb_avg(uint8_t R, uint8_t G, uint8_t B)
 {
   char ret;
-  uint32_t R = (*arg & 0xff0000)>>16;;
-  uint32_t G = (*arg & 0x00ff00)>>8;
-  uint32_t B =  *arg & 0x0000ff;
 
   ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
 
