@@ -4,9 +4,9 @@ LDFLAGS = -lm
 OUTPUT = bitmap
 BUILDDIR = build
 
-FILE = a
+FILE = 022
 
-OBJ = main.o
+OBJ = main.o bitmap.o
 
 build: $(OBJ)
 	mkdir -p $(BUILDDIR)

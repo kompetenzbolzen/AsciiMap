@@ -25,7 +25,7 @@
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
 const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
-//const char map[] = {' ', '`', '.', ',', ':', ';', '\'', '+', '#', '@'};
+//const char map[] = {' ', '`', '.', ',', ':', ';', '\"', '+', '#', '@'};
 //Routine for flipping bytes
 uint32_t flip(unsigned char* _v, int _c);
 
