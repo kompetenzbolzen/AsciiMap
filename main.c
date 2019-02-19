@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
   if(bitmap.error)
   {
-    printf("Error reading file");
+    printf("Error reading file\n");
     return 1;
   }
 
@@ -131,9 +131,19 @@ int main(int argc, char *argv[])
   //Cleanup
 
 
-  for(int i = 0; i < size_y; i++)
+  for(int i = 0; i < size_x; i++)
     free (ascii_buff[i]);
   free(ascii_buff);
+
+  for(int i = 0; i < bitmap.x; i++)
+  {
+    free(bitmap.R[i]);
+    free(bitmap.G[i]);
+    free(bitmap.B[i]);
+  }
+  free(bitmap.R);
+  free(bitmap.G);
+  free(bitmap.B);
 
   fclose(out);
 

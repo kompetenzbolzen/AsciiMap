@@ -40,6 +40,8 @@ struct bitmap_pixel_data bitmap_read(char *_file)
 
   ret = bitmap_read_pixel_data(bitmap, header);
 
+
+  free(header.tables);
   fclose(bitmap);
 
   ret.error = 0;
