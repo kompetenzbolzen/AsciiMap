@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 #include "bitmap.h"
 
@@ -32,6 +33,17 @@
 #define CHAR_SIZE_X 2 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
+struct prog_param
+{
+	char *filename;
+	unsigned int charsize_x;
+	unsigned int charsize_y;
+};
+
+struct prog_param parse_args(int argc, char *argv[]);
+
+void print_help( void );
+
 const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
 //const char map[] = {' ', '`', '.', ',', ':', ';', '\"', '+', '#', '@'};
 
@@ -47,6 +59,8 @@ char calc_char(uint8_t _c, uint8_t _min, uint8_t _max);
 
 int main(int argc, char *argv[])
 {
+  struct prog_param args = parse_args(argc, argv);
+
   char          **ascii_buff;
 
   uint8_t b_max = 0x00;
@@ -54,13 +68,8 @@ int main(int argc, char *argv[])
 
   struct bitmap_pixel_data bitmap;
 
-  if(argc != 3)
-  {
-    printf("Usage: %s <input> <output>\n", argv[0]);
-    return 1;
-  }
 
-  bitmap = bitmap_read(argv[1]);
+  bitmap = bitmap_read(args.filename);
 
   if(bitmap.error)
   {
@@ -70,8 +79,8 @@ int main(int argc, char *argv[])
 
   //Calculate Averages of CHAR_SIZE x CHAR_SIZE blocks
   unsigned int size_x,size_y;
-  size_x = bitmap.x  / CHAR_SIZE_X;
-  size_y = bitmap.y / CHAR_SIZE_Y;
+  size_x = bitmap.x  / args.charsize_x;
+  size_y = bitmap.y / args.charsize_y;
 
   DEBUG_PRINTF("Creating ASCII File %u x %u\n", size_x, size_y);
 
@@ -86,20 +95,20 @@ int main(int argc, char *argv[])
   {
     for(int y = 0; y < size_y; y++)
     {
-      char b[CHAR_SIZE_X][CHAR_SIZE_Y];
+      char b[args.charsize_x][args.charsize_y];
 
-      for(int r = 0; r < CHAR_SIZE_Y; r++)
+      for(int r = 0; r < args.charsize_y; r++)
       {
-        int row = y * CHAR_SIZE_Y + r;
-        for(int c = 0; c < CHAR_SIZE_X; c++)
+        int row = y * args.charsize_y + r;
+        for(int c = 0; c < args.charsize_x; c++)
         {
-          int col = x * CHAR_SIZE_X + c;
+          int col = x * args.charsize_x + c;
           //b[c][r] = avg(3, (char*)&bitmap_buff[row][col]);
           b[c][r] = rgb_avg(bitmap.R[col][row],bitmap.G[col][row],bitmap.B[col][row]);
         }
       }
 
-      ascii_buff[x][y] = avg(CHAR_SIZE_X * CHAR_SIZE_Y, (char*)&b);
+      ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, (char*)&b);
 
       if((uint8_t)ascii_buff[x][y] < b_min)
         b_min = ascii_buff[x][y];
@@ -111,23 +120,25 @@ int main(int argc, char *argv[])
   DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 
   //Write Output
-  DEBUG_PRINTF("Opening %s for writing.\n", argv[2]);
+  /*DEBUG_PRINTF("Opening %s for writing.\n", argv[2]);
   FILE *out = fopen(argv[2], "w");
 
   if(!out)
   {
     printf("Error opening output File. Check writing permissions.\n");
     return 1;
-  }
+  }*/
 
   for(int y = 0; y<size_y; y++)
   {
     for(int x = 0; x < size_x; x++)
     {
-      fputc( calc_char(ascii_buff[x][y], b_min, b_max) , out);
+      printf("%c", calc_char(ascii_buff[x][y], b_min, b_max));
+	    //fputc( calc_char(ascii_buff[x][y], b_min, b_max) , out);
     }
     DEBUG_PRINTF(".");
-    fputc('\n', out);
+    //fputc('\n', out);
+    printf("\n");
   }
   DEBUG_PRINTF("\n");
 
@@ -148,7 +159,7 @@ int main(int argc, char *argv[])
   free(bitmap.G);
   free(bitmap.B);
 
-  fclose(out);
+  //fclose(out);
 
   return 0;
 }//main
@@ -180,4 +191,76 @@ char rgb_avg(uint8_t R, uint8_t G, uint8_t B)
   ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
 
   return ret;
+}
+
+struct prog_param parse_args(int argc, char *argv[])
+{
+	struct prog_param ret;
+
+	ret.filename = NULL;
+	ret.charsize_x = CHAR_SIZE_X;
+	ret.charsize_y = 0;
+
+	for (int i = 1; i < argc; i++)
+	{
+		if(argv[i][0] == '-')
+		{
+			int icpy = i;
+			for(int o = 1; o < strlen(argv[icpy]); o++)
+			{
+				switch(argv[icpy][o])
+				{
+					case 'h':
+						print_help();
+						exit(1);
+						break;
+					case 'x':
+						DEBUG_PRINTF("x\n");
+						i++;
+						ret.charsize_x = atoi(argv[i]);
+						break;
+					case 'y':
+						DEBUG_PRINTF("y\n");
+						i++;
+						ret.charsize_y = atoi(argv[i]);
+						break;
+					default:
+						printf("Unrecognized Option\n");
+						print_help();
+						exit(1);
+
+				};
+			}
+		}
+		else if(ret.filename == NULL)
+		{
+			ret.filename = argv[i];
+		}
+		else
+		{
+			printf("Wrong number of arguments\n");
+			print_help();
+			exit(1);
+		}
+	}
+
+	if(ret.filename == NULL)
+	{
+		printf("No input file.\n");
+		print_help();
+		exit(1);
+	}
+
+	if(!ret.charsize_y)
+		ret.charsize_y = 2 * ret.charsize_x;
+
+	return ret;
+}
+
+void print_help( void )
+{
+	printf("ASCIIMap\n(c) 2019 Jonas Gunz, github.com/kompetenzbolzen/AsciiMap\n");
+	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
+	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
+	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n\n");
 }
