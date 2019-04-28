@@ -13,23 +13,6 @@
 #define DEBUG_PRINTF(...) {  }
 #endif
 
-#define _HEADER_SIZE 54 //Fileheader + infoheader
-#define IDENTIFIER 0x424d //BM BitMap identifier
-
-//Address Definitions
-#define BF_TYPE           0x00
-#define BF_SIZE           0x02
-#define BF_OFF_BITS       0x0a
-
-#define BI_SIZE           0x0e
-#define BI_WIDTH          0x12
-#define BI_HEIGHT         0x16
-#define BI_BIT_COUNT      0x1c
-#define BI_COMPRESSION    0x1e
-#define BI_SIZE_IMAGE     0x22
-#define BI_CLR_USED       0x2e
-#define BI_CLR_IMPORTANT  0x32
-
 #define CHAR_SIZE_X 2 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
@@ -38,21 +21,49 @@ struct prog_param
 	char *filename;
 	unsigned int charsize_x;
 	unsigned int charsize_y;
+	uint8_t color;
 };
+
+struct console_color
+{
+	uint8_t R;
+	uint8_t G;
+	uint8_t B;
+
+	unsigned int no;
+};
+
+struct console_color colors[] = { //Insert the console's config here
+	{0,0,0,30}, //Black
+	{178,24,24,31}, //red
+	{24,178,24,32}, //Green
+	{178,104,24,33}, //Brown
+	{24,24,178,34}, //blue
+	{178,24,178,35}, //Magenta
+	{24,178,178,36}, //Cyan
+	{255,255,255,37} //White
+};
+
+//Both maps produce very different results
+const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
+//const char map[] = {' ', '`', '.', ',', ':', ';', '\"', '+', '#', '@'};
 
 struct prog_param parse_args(int argc, char *argv[]);
 
 void print_help( void );
 
-const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
-//const char map[] = {' ', '`', '.', ',', ':', ';', '\"', '+', '#', '@'};
-
 //Calculate average
-char avg(int argc, char *argv);
+uint8_t avg(int argc, uint8_t *argv);
 
-//Calculate luminance from rgb_avg
+//Distance of 2 3d vectors
+float distance(uint8_t _1[3], uint8_t _2[3]);
+
+//Calculate luminance
 //Order LSB first: BGR
-char rgb_avg(uint8_t R, uint8_t G, uint8_t B);
+uint8_t rgb_avg(uint8_t R, uint8_t G, uint8_t B);
+
+//Get nearest printable color in console
+unsigned int calc_col(uint8_t R, uint8_t G, uint8_t B);
 
 //Select Char based on 1B brightness Value
 char calc_char(uint8_t _c, uint8_t _min, uint8_t _max);
@@ -61,18 +72,17 @@ int main(int argc, char *argv[])
 {
   struct prog_param args = parse_args(argc, argv);
 
-  char          **ascii_buff;
+  uint8_t          **ascii_buff;
+  unsigned int	**col_buff;
 
   uint8_t b_max = 0x00;
   uint8_t b_min = 0xff;
 
   struct bitmap_pixel_data bitmap;
 
-
   bitmap = bitmap_read(args.filename);
 
-  if(bitmap.error)
-  {
+  if(bitmap.error) {
     printf("Error reading file\n");
     return 1;
   }
@@ -82,33 +92,61 @@ int main(int argc, char *argv[])
   size_x = bitmap.x  / args.charsize_x;
   size_y = bitmap.y / args.charsize_y;
 
-  DEBUG_PRINTF("Creating ASCII File %u x %u\n", size_x, size_y);
+  DEBUG_PRINTF("Output size: %u x %u\n", size_x, size_y);
 
+  //Where the chars are stored
   ascii_buff = malloc(sizeof(*ascii_buff) * size_x);
-  for (int i = 0; i < size_x; i++)
-  {
+  for (int i = 0; i < size_x; i++) {
     ascii_buff[i] = malloc(sizeof(ascii_buff[i]) * size_y);
   }
 
-  //Nest thine Lööps
-  for(int x = 0; x < size_x; x++)
-  {
-    for(int y = 0; y < size_y; y++)
-    {
-      char b[args.charsize_x][args.charsize_y];
+  //Where the color is stored, if activated
+  if(args.color) {
+	  col_buff = malloc(sizeof(*col_buff) * size_x);
+	  for (int i = 0; i < size_x; i++)
+	  {
+	  	col_buff[i] = malloc(sizeof(col_buff[i]) * size_y);
+  	  }
+  }
 
-      for(int r = 0; r < args.charsize_y; r++)
-      {
-        int row = y * args.charsize_y + r;
-        for(int c = 0; c < args.charsize_x; c++)
-        {
-          int col = x * args.charsize_x + c;
-          //b[c][r] = avg(3, (char*)&bitmap_buff[row][col]);
-          b[c][r] = rgb_avg(bitmap.R[col][row],bitmap.G[col][row],bitmap.B[col][row]);
-        }
+  //Nest thine Lööps
+  //Very not optimal Variable names!!!!!!!!!!!!!
+  //
+  //For every Pixel-char: calculate average values of pixel blocks
+  for(unsigned int x = 0; x < size_x; x++) {
+    for(unsigned int y = 0; y < size_y; y++) {
+      uint8_t brightness [ args.charsize_x ][ args.charsize_y ]; //Average brightness of every pixels
+      uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of block
+      unsigned int cc_counter = 0;
+
+      //Iterate through Pixel block
+      for(unsigned int row_c = 0; row_c < args.charsize_y; row_c++) {
+        unsigned int row = y * args.charsize_y + row_c; //Actual position in Bitmap
+
+        for(unsigned int col_c = 0; col_c < args.charsize_x; col_c++) {
+          unsigned int col = x * args.charsize_x + col_c; //Actual position in bitmap
+
+          brightness[col_c][row_c] = rgb_avg( 	bitmap.R[col][row], 
+			  			bitmap.G[col][row], 
+						bitmap.B[col][row] );
+
+	  if(args.color) {
+	    cc[0][cc_counter] = bitmap.R[col][row];
+            cc[1][cc_counter] = bitmap.G[col][row];
+            cc[2][cc_counter] = bitmap.B[col][row];
+	    cc_counter++;
+	  }
+	}
       }
 
-      ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, (char*)&b);
+      ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
+      if(args.color)
+      {
+      col_buff[x][y] = calc_col(
+		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
+		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
+		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]) );
+      }
 
       if((uint8_t)ascii_buff[x][y] < b_min)
         b_min = ascii_buff[x][y];
@@ -118,13 +156,16 @@ int main(int argc, char *argv[])
   }
 
   DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
-
+  if(args.color)
+	  printf("\e[0m");//Default colors
 
   for(int y = 0; y<size_y; y++)
   {
     for(int x = 0; x < size_x; x++)
     {
-      printf("%c", calc_char(ascii_buff[x][y], b_min, b_max));
+      if(args.color)
+	      printf("\e[%um", col_buff[x][y]);
+      printf("%c", calc_char(ascii_buff[x][y], 0,255));//b_min, b_max));
     }
     printf("\n");
   }
@@ -150,9 +191,9 @@ int main(int argc, char *argv[])
 }//main
 
 
-char avg(int argc, char *argv)
+uint8_t avg(int argc, uint8_t *argv)
 {
-  char ret = 0;
+  uint8_t ret = 0;
   uint64_t sum = 0;
 
   for(int i = 0; i < argc; i++)
@@ -169,9 +210,9 @@ char calc_char(uint8_t _c , uint8_t _min, uint8_t _max)
   return map [(int)((sizeof(map)-1) * (c))];
 }
 
-char rgb_avg(uint8_t R, uint8_t G, uint8_t B)
+uint8_t rgb_avg(uint8_t R, uint8_t G, uint8_t B)
 {
-  char ret;
+  uint8_t ret;
 
   ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
 
@@ -185,6 +226,7 @@ struct prog_param parse_args(int argc, char *argv[])
 	ret.filename = NULL;
 	ret.charsize_x = CHAR_SIZE_X;
 	ret.charsize_y = 0;
+	ret.color = 0;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -208,6 +250,9 @@ struct prog_param parse_args(int argc, char *argv[])
 						DEBUG_PRINTF("y\n");
 						i++;
 						ret.charsize_y = atoi(argv[i]);
+						break;
+					case  'c':
+						ret.color = 1;
 						break;
 					default:
 						printf("Unrecognized Option\n");
@@ -247,5 +292,49 @@ void print_help( void )
 	printf("ASCIIMap\n(c) 2019 Jonas Gunz, github.com/kompetenzbolzen/AsciiMap\n");
 	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
-	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n\n");
+	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in color mode. Default: OFF\n");
+}
+
+unsigned int calc_col(uint8_t R, uint8_t G, uint8_t B)
+{
+	DEBUG_PRINTF("%u %u %u\n", R, G, B);
+
+	unsigned int nearest_num = 0;
+	uint8_t a2[3];
+	a2[0] = colors[0].R;
+	a2[1] = colors[0].G; 
+	a2[2] = colors[0].B;
+
+	uint8_t a1[] = {R,G,B};
+
+	//Normalize the color
+	/*while(a1[0] < 255 && a1[1] < 255 && a1[2] < 255)
+	{
+		a1[0]++;
+		a1[1]++;
+		a1[2]++;
+	}*/
+
+	float nearest_val = distance( a1, a2 );
+	
+	for( unsigned int i = 1; i < sizeof(colors) / sizeof(struct console_color); i++)
+	{
+		a2[0] = colors[i].R;
+		a2[1] = colors[i].G; 
+		a2[2] = colors[i].B;
+
+		float dist = distance(a1, a2);
+		if(dist < nearest_val){
+			nearest_num = i;
+			nearest_val = dist;
+		}
+	}
+	DEBUG_PRINTF("Nearest: %u %f\n", nearest_num, nearest_val);
+	return colors[nearest_num].no;
+}
+
+float distance(uint8_t _1[3], uint8_t _2[3])
+{
+	return fabs(sqrt( pow((double)_1[0], 2) + pow((double)_1[1],2) + pow((double)_1[2],2) )
+		 -  sqrt( pow((double)_2[0], 2) + pow((double)_2[1],2) + pow((double)_2[2],2) ) );
 }
