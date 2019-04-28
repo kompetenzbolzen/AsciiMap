@@ -22,7 +22,7 @@ struct bitmap_pixel_data bitmap_read(char *_file)
   ret.R = ret.G = ret.B = NULL;
   ret.error = 1;
 
-  FILE *bitmap = fopen(_file,"r");
+  FILE *bitmap = fopen(_file,"rb");
 
   if(!bitmap)
     return ret;

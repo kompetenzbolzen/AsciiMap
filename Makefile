@@ -1,5 +1,5 @@
 CC      = /usr/bin/gcc
-CFLAGS  = -Wall -g
+CFLAGS  = -Wall
 LDFLAGS = -lm
 OUTPUT = bitmap
 BUILDDIR = build
@@ -12,7 +12,10 @@ build: $(OBJ)
 	mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
 
-debug: build
+debug: CFLAGS+= -g -D _DEBUG
+debug: build;
+
+gdb: debug
 	gdb $(BUILDDIR)/$(OUTPUT)
 
 %.o: %.c

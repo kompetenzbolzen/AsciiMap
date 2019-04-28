@@ -5,6 +5,12 @@
 
 #include "bitmap.h"
 
+#ifdef _DEBUG
+#warning "Compiling with DEBUG"
+#define DEBUG_PRINTF(...) { printf(__VA_ARGS__); }
+#else
+#define DEBUG_PRINTF(...) {  }
+#endif
 
 #define _HEADER_SIZE 54 //Fileheader + infoheader
 #define IDENTIFIER 0x424d //BM BitMap identifier
@@ -28,7 +34,6 @@
 
 const char map[] = {' ', ' ', '.', ',', '`', '-', '~', '"', '*', ':', ';', '<', '!', '/', '?', '%', '&', '=', '$', '#'};
 //const char map[] = {' ', '`', '.', ',', ':', ';', '\"', '+', '#', '@'};
-//Routine for flipping bytes
 
 //Calculate average
 char avg(int argc, char *argv);
@@ -68,7 +73,7 @@ int main(int argc, char *argv[])
   size_x = bitmap.x  / CHAR_SIZE_X;
   size_y = bitmap.y / CHAR_SIZE_Y;
 
-  printf("Creating ASCII File %u x %u\n", size_x, size_y);
+  DEBUG_PRINTF("Creating ASCII File %u x %u\n", size_x, size_y);
 
   ascii_buff = malloc(sizeof(*ascii_buff) * size_x);
   for (int i = 0; i < size_x; i++)
@@ -103,10 +108,10 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
+  DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 
   //Write Output
-  printf("Opening %s for writing.\n", argv[2]);
+  DEBUG_PRINTF("Opening %s for writing.\n", argv[2]);
   FILE *out = fopen(argv[2], "w");
 
   if(!out)
@@ -121,16 +126,14 @@ int main(int argc, char *argv[])
     {
       fputc( calc_char(ascii_buff[x][y], b_min, b_max) , out);
     }
-    printf(".");
+    DEBUG_PRINTF(".");
     fputc('\n', out);
   }
-  printf("\n");
+  DEBUG_PRINTF("\n");
 
-  printf("Finished!\n");
+  DEBUG_PRINTF("Finished!\n");
 
   //Cleanup
-
-
   for(int i = 0; i < size_x; i++)
     free (ascii_buff[i]);
   free(ascii_buff);
