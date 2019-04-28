@@ -119,28 +119,15 @@ int main(int argc, char *argv[])
 
   DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 
-  //Write Output
-  /*DEBUG_PRINTF("Opening %s for writing.\n", argv[2]);
-  FILE *out = fopen(argv[2], "w");
-
-  if(!out)
-  {
-    printf("Error opening output File. Check writing permissions.\n");
-    return 1;
-  }*/
 
   for(int y = 0; y<size_y; y++)
   {
     for(int x = 0; x < size_x; x++)
     {
       printf("%c", calc_char(ascii_buff[x][y], b_min, b_max));
-	    //fputc( calc_char(ascii_buff[x][y], b_min, b_max) , out);
     }
-    DEBUG_PRINTF(".");
-    //fputc('\n', out);
     printf("\n");
   }
-  DEBUG_PRINTF("\n");
 
   DEBUG_PRINTF("Finished!\n");
 
@@ -158,8 +145,6 @@ int main(int argc, char *argv[])
   free(bitmap.R);
   free(bitmap.G);
   free(bitmap.B);
-
-  //fclose(out);
 
   return 0;
 }//main

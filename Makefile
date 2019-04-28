@@ -4,7 +4,7 @@ LDFLAGS = -lm
 OUTPUT = bitmap
 BUILDDIR = build
 
-FILE = 022
+FILE = 022.bmp
 
 OBJ = main.o bitmap.o
 
@@ -34,4 +34,4 @@ clean:
 	rm -Rdf $(BUILDDIR)
 
 run: build
-	$(BUILDDIR)/$(OUTPUT) $(FILE).bmp $(FILE).txt
+	$(BUILDDIR)/$(OUTPUT) $(FILE)
