@@ -2,15 +2,15 @@
 
 uint8_t avg(int argc, uint8_t *argv)
 {
-  uint8_t ret = 0;
-  uint64_t sum = 0;
+	uint8_t ret = 0;
+	uint64_t sum = 0;
 
-  for(int i = 0; i < argc; i++)
-    sum += (uint64_t)argv[i];
+	for(int i = 0; i < argc; i++)
+		sum += (uint64_t)argv[i];
 
-  ret = (char)(sum / argc);
+	ret = (char)(sum / argc);
 
-  return ret;
+	return ret;
 }//avg
 
 

@@ -27,7 +27,7 @@ struct prog_param
 	uint8_t color;
 };
 
-struct prog_param parse_args(int argc, char *argv[]);
+struct prog_param parse_args(int argc, char *argv[]); 
 
 void print_help( void );
 
@@ -35,7 +35,9 @@ int main(int argc, char *argv[])
 {
 	struct prog_param args = parse_args(argc, argv);
 
+	//Stores a luminance array
 	uint8_t	**ascii_buff;
+	//Stores a color array
 	char*	**col_buff;
 
 	uint8_t b_max = 0x00;
@@ -50,9 +52,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	//Calculate Averages of CHAR_SIZE x CHAR_SIZE blocks
+	//x and y size of ASCII-image
 	unsigned int size_x,size_y;
-	size_x = bitmap.x	/ args.charsize_x;
+	size_x = bitmap.x / args.charsize_x;
 	size_y = bitmap.y / args.charsize_y;
 
 	DEBUG_PRINTF("Output size: %u x %u\n", size_x, size_y);
@@ -72,11 +74,11 @@ int main(int argc, char *argv[])
 	//Nest thine Lööps
 	//Very not optimal Variable names!!!!!!!!!!!!!
 	//
-	//For every Pixel-char: calculate average values of pixel blocks
+	//For every size_x * size_y block: calculate average values of pixel blocks
 	for(unsigned int x = 0; x < size_x; x++) {
 		for(unsigned int y = 0; y < size_y; y++) {
-			uint8_t brightness [ args.charsize_x ][ args.charsize_y ]; //Average brightness of every pixels
-			uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of block
+			uint8_t brightness [ args.charsize_x ][ args.charsize_y ]; //Average brightness of every pixel
+			uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of Pixels
 			unsigned int cc_counter = 0;
 
 			//Iterate through Pixel block
