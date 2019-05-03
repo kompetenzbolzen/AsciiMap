@@ -16,6 +16,7 @@ uint8_t avg(int argc, uint8_t *argv)
 
 float distance(uint8_t _1[3], uint8_t _2[3])
 {
-	return fabs(sqrt( pow((double)_1[0], 2) + pow((double)_1[1],2) + pow((double)_1[2],2) )
-		 -  sqrt( pow((double)_2[0], 2) + pow((double)_2[1],2) + pow((double)_2[2],2) ) );
+	return fabs( sqrt(	pow((double)_2[0] - (double)_1[0], 2) + 
+				pow((double)_2[1] - (double)_1[1], 2) + 
+				pow((double)_2[2] - (double)_1[2], 2) ) );
 }
