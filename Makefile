@@ -5,8 +5,8 @@ OUTPUT = bitmap
 BUILDDIR = build
 
 FILE = 022.bmp
-
-OBJ = main.o bitmap.o
+SRCS = $(wildcard *.c)
+OBJ = $(SRCS:.c=.o)
 
 build: $(OBJ)
 	mkdir -p $(BUILDDIR)
