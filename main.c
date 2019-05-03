@@ -13,7 +13,7 @@
 #warning "Compiling with DEBUG"
 #define DEBUG_PRINTF(...) { printf(__VA_ARGS__); }
 #else
-#define DEBUG_PRINTF(...) {  }
+#define DEBUG_PRINTF(...) {	}
 #endif
 
 #define CHAR_SIZE_X 2 //How many pixels should form one ASCII char?
@@ -33,134 +33,129 @@ void print_help( void );
 
 int main(int argc, char *argv[])
 {
-  struct prog_param args = parse_args(argc, argv);
+	struct prog_param args = parse_args(argc, argv);
 
-  uint8_t	**ascii_buff;
-  char*		**col_buff;
+	uint8_t	**ascii_buff;
+	char*	**col_buff;
 
-  uint8_t b_max = 0x00;
-  uint8_t b_min = 0xff;
+	uint8_t b_max = 0x00;
+	uint8_t b_min = 0xff;
 
-  struct bitmap_pixel_data bitmap;
+	struct bitmap_pixel_data bitmap;
 
-  bitmap = bitmap_read(args.filename);
+	bitmap = bitmap_read(args.filename);
 
-  if(bitmap.error) {
-    printf("Error reading file\n");
-    return 1;
-  }
+	if(bitmap.error) {
+		printf("Error reading file\n");
+		return 1;
+	}
 
-  //Calculate Averages of CHAR_SIZE x CHAR_SIZE blocks
-  unsigned int size_x,size_y;
-  size_x = bitmap.x  / args.charsize_x;
-  size_y = bitmap.y / args.charsize_y;
+	//Calculate Averages of CHAR_SIZE x CHAR_SIZE blocks
+	unsigned int size_x,size_y;
+	size_x = bitmap.x	/ args.charsize_x;
+	size_y = bitmap.y / args.charsize_y;
 
-  DEBUG_PRINTF("Output size: %u x %u\n", size_x, size_y);
+	DEBUG_PRINTF("Output size: %u x %u\n", size_x, size_y);
 
-  //Where the chars are stored
-  ascii_buff = malloc(sizeof(*ascii_buff) * size_x);
-  for (int i = 0; i < size_x; i++) {
-    ascii_buff[i] = malloc(sizeof(ascii_buff[i]) * size_y);
-  }
+	//Where the chars are stored
+	ascii_buff = malloc(sizeof(*ascii_buff) * size_x);
+	for (int i = 0; i < size_x; i++) 
+		ascii_buff[i] = malloc(sizeof(ascii_buff[i]) * size_y);
 
-  //Where the color is stored, if activated
-  if(args.color) {
-	  col_buff = malloc(sizeof(*col_buff) * size_x);
-	  for (int i = 0; i < size_x; i++)
-	  {
-	  	col_buff[i] = malloc(sizeof(col_buff[i]) * size_y);
-  	  }
-  }
+	//Where the color is stored, if activated
+	if(args.color) {
+		col_buff = malloc(sizeof(*col_buff) * size_x);
+		for (int i = 0; i < size_x; i++)
+			col_buff[i] = malloc(sizeof(col_buff[i]) * size_y);
+	}
 
-  //Nest thine Lööps
-  //Very not optimal Variable names!!!!!!!!!!!!!
-  //
-  //For every Pixel-char: calculate average values of pixel blocks
-  for(unsigned int x = 0; x < size_x; x++) {
-    for(unsigned int y = 0; y < size_y; y++) {
-      uint8_t brightness [ args.charsize_x ][ args.charsize_y ]; //Average brightness of every pixels
-      uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of block
-      unsigned int cc_counter = 0;
+	//Nest thine Lööps
+	//Very not optimal Variable names!!!!!!!!!!!!!
+	//
+	//For every Pixel-char: calculate average values of pixel blocks
+	for(unsigned int x = 0; x < size_x; x++) {
+		for(unsigned int y = 0; y < size_y; y++) {
+			uint8_t brightness [ args.charsize_x ][ args.charsize_y ]; //Average brightness of every pixels
+			uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of block
+			unsigned int cc_counter = 0;
 
-      //Iterate through Pixel block
-      for(unsigned int row_c = 0; row_c < args.charsize_y; row_c++) {
-        unsigned int row = y * args.charsize_y + row_c; //Actual position in Bitmap
+			//Iterate through Pixel block
+			for(unsigned int row_c = 0; row_c < args.charsize_y; row_c++) {
+				unsigned int row = y * args.charsize_y + row_c; //Actual position in Bitmap
 
-        for(unsigned int col_c = 0; col_c < args.charsize_x; col_c++) {
-          unsigned int col = x * args.charsize_x + col_c; //Actual position in bitmap
+				for(unsigned int col_c = 0; col_c < args.charsize_x; col_c++) {
+					unsigned int col = x * args.charsize_x + col_c; //Actual position in bitmap
 
-          brightness[col_c][row_c] = rgb_avg( 	bitmap.R[col][row], 
-			  			bitmap.G[col][row], 
-						bitmap.B[col][row] );
+					brightness[col_c][row_c] = rgb_avg(
+							bitmap.R[col][row],
+							bitmap.G[col][row],
+							bitmap.B[col][row]);
 
-	  if(args.color) {
-	    cc[0][cc_counter] = bitmap.R[col][row];
-            cc[1][cc_counter] = bitmap.G[col][row];
-            cc[2][cc_counter] = bitmap.B[col][row];
-	    cc_counter++;
-	  }//if
-	}//for col_c
-      }//for row_c
+					if(args.color) {
+						cc[0][cc_counter] = bitmap.R[col][row];
+						cc[1][cc_counter] = bitmap.G[col][row];
+						cc[2][cc_counter] = bitmap.B[col][row];
+						cc_counter++;
+					}//if
+				}//for col_c
+			}//for row_c
 
-      ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
-      if(args.color == 1)
-      {
-      	col_buff[x][y] = calc_col(
-		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
-		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
-		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]) );
-      }
-      else if(args.color == 2)
-      {
-      	col_buff[x][y] = calc_col_ansi(
-		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
-		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
-		      (uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
-      }
+			ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
+			if(args.color == 1) {
+				col_buff[x][y] = calc_col(
+					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
+					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
+					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
+			} else if(args.color == 2) {
+				col_buff[x][y] = calc_col_ansi(
+					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
+					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
+					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
+			}
 
-      if((uint8_t)ascii_buff[x][y] < b_min)
-        b_min = ascii_buff[x][y];
-      if((uint8_t)ascii_buff[x][y] > b_max)
-        b_max = ascii_buff[x][y];
-    }//for y
-  }//for x
+			if((uint8_t)ascii_buff[x][y] < b_min)
+				b_min = ascii_buff[x][y];
+			if((uint8_t)ascii_buff[x][y] > b_max)
+				b_max = ascii_buff[x][y];
+		}//for y
+	}//for x
 
-  DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
-  if(args.color)
-	  printf("\e[0m");//Default colors
+	DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 
-  for(int y = 0; y<size_y; y++)
-  {
-    for(int x = 0; x < size_x; x++)
-    {
-      if(args.color) 
-	      printf("\e[%sm", col_buff[x][y]);
+	if(args.color)
+		printf("\e[0m");//Default colors
 
-      printf("%c", calc_char(ascii_buff[x][y], 0,255));//b_min, b_max));
-    }
-    printf("\n");
-  }
-  if(args.color)
-	  printf("\e[0m");//Default colors
+	//Print buffer
+	for(int y = 0; y<size_y; y++) {
+		for(int x = 0; x < size_x; x++) {
+			if(args.color) 
+				printf("\e[%sm", col_buff[x][y]);
 
-  DEBUG_PRINTF("Finished!\n");
+			printf("%c", calc_char(ascii_buff[x][y], 0,255));//b_min, b_max));
+		}
+		printf("\n");
+	}
 
-  //Cleanup
-  for(int i = 0; i < size_x; i++)
-    free (ascii_buff[i]);
-  free(ascii_buff);
+	if(args.color)
+		printf("\e[0m");//Default colors
 
-  for(int i = 0; i < bitmap.x; i++)
-  {
-    free(bitmap.R[i]);
-    free(bitmap.G[i]);
-    free(bitmap.B[i]);
-  }
-  free(bitmap.R);
-  free(bitmap.G);
-  free(bitmap.B);
+	DEBUG_PRINTF("Finished!\n");
 
-  return 0;
+	//Cleanup
+	for(int i = 0; i < size_x; i++)
+		free (ascii_buff[i]);
+	free(ascii_buff);
+
+	for(int i = 0; i < bitmap.x; i++) {
+		free(bitmap.R[i]);
+		free(bitmap.G[i]);
+		free(bitmap.B[i]);
+	}
+	free(bitmap.R);
+	free(bitmap.G);
+	free(bitmap.B);
+
+	return 0;
 }//main
 
 struct prog_param parse_args(int argc, char *argv[])
