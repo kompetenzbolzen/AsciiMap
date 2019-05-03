@@ -1,11 +1,12 @@
 CC      = /usr/bin/gcc
 CFLAGS  = -Wall
 LDFLAGS = -lm
+SOURCEDIR = src
 OUTPUT = bitmap
 BUILDDIR = build
 
 FILE = 022.bmp
-SRCS = $(wildcard *.c)
+SRCS = $(wildcard $(SOURCEDIR)/*.c)
 OBJ = $(SRCS:.c=.o)
 
 build: $(OBJ)
@@ -19,11 +20,8 @@ gdb: debug
 	gdb $(BUILDDIR)/$(OUTPUT)
 
 %.o: %.c
-	@echo
-	@echo Building $<
-	@echo ==============
-	@echo
-	$(CC) $(CFLAGS) -c $<
+	@echo [ CC ] $<
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 all: clean build
 
