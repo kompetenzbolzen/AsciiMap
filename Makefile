@@ -2,8 +2,9 @@ CC      = /usr/bin/gcc
 CFLAGS  = -Wall
 LDFLAGS = -lm
 SOURCEDIR = src
-OUTPUT = bitmap
+OUTPUT = asciimap
 BUILDDIR = build
+PREFIX = /
 
 FILE = 022.bmp
 SRCS = $(wildcard $(SOURCEDIR)/*.c)
@@ -33,3 +34,6 @@ clean:
 
 run: build
 	$(BUILDDIR)/$(OUTPUT) $(FILE)
+
+install: build
+	@cp $(BUILDDIR)/$(OUTPUT) $(PREFIX)/bin/$(OUTPUT)
