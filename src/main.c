@@ -103,12 +103,7 @@ int main(int argc, char *argv[])
 			}//for row_c
 
 			ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
-			if(args.color == 1) {
-				col_buff[x][y] = calc_col(
-					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
-					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
-					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
-			} else if(args.color == 2) {
+			if(args.color) {
 				col_buff[x][y] = calc_col_ansi(
 					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
 					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
@@ -191,9 +186,6 @@ struct prog_param parse_args(int argc, char *argv[])
 					case 'c':
 						ret.color = 1;
 						break;
-					case 'C':
-						ret.color = 2;
-						break;
 					default:
 						printf("Unrecognized Option\n");
 						print_help();
@@ -228,8 +220,7 @@ void print_help( void )
 	printf("ASCIIMap\n(c) 2019 Jonas Gunz, github.com/kompetenzbolzen/AsciiMap\n");
 	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
-	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in 7 color mode. Default: OFF\n");
-	printf("	-C: Print in ANSI 256 color mode. Default: OFF\n");
+	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
 }
 
 
