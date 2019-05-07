@@ -25,6 +25,7 @@ struct prog_param
 	unsigned int charsize_x;
 	unsigned int charsize_y;
 	uint8_t color;
+	uint8_t use_stdin;
 };
 
 struct prog_param parse_args(int argc, char *argv[]); 
@@ -163,6 +164,7 @@ struct prog_param parse_args(int argc, char *argv[])
 	ret.charsize_x = CHAR_SIZE_X;
 	ret.charsize_y = 0;
 	ret.color = 0;
+	ret.use_stdin = 0;
 
 	for (int i = 1; i < argc; i++) {
 		if(argv[i][0] == '-') {
@@ -186,14 +188,17 @@ struct prog_param parse_args(int argc, char *argv[])
 					case 'c':
 						ret.color = 1;
 						break;
+					case 'i':
+						ret.use_stdin = 1;
+						break;
 					default:
-						printf("Unrecognized Option\n");
+						printf("Unrecognized Option '%c'\n", argv[icpy][o]);
 						print_help();
 						exit(1);
 				};//switch
 			}//for o
 		}//if
-		else if(ret.filename == NULL) {
+		else if(ret.filename == NULL && !ret.use_stdin ) {
 			ret.filename = argv[i];
 		} else {
 			printf("Wrong number of arguments\n");
@@ -202,9 +207,9 @@ struct prog_param parse_args(int argc, char *argv[])
 		}
 	}//for i
 
-	if(ret.filename == NULL)
+	if(ret.filename == NULL && !ret.use_stdin )
 	{
-		printf("No input file.\n");
+		printf("No input file. Use -i to read from stdin\n");
 		print_help();
 		exit(1);
 	}
@@ -221,6 +226,7 @@ void print_help( void )
 	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
 	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
+	printf("	-i: Read from STDIN instead of file. The provided filename will be ignored.\n");
 }
 
 
