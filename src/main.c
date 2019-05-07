@@ -226,7 +226,7 @@ void print_help( void )
 	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
 	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
-	printf("	-i: Read from STDIN instead of file. The provided filename will be ignored.\n");
+	printf("	-i: Read from STDIN instead of file.\n");
 }
 
 
