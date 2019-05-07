@@ -1,9 +1,15 @@
 # AsciiMap
 
-Converts 24bit Windows BitMap files to ASCII
+CMDline tool to Convert 24bit Windows BitMap files to ASCII with optional ANSI-colors
 
-provide -c to use ANSI 256 color-mode
+### Options
 
-provide -x <n> to average n x 2n pixels to one char
+* -c to use ANSI 256 color-mode
+
+* -x <n> to average n x 2n pixels to one char
+
+* -i use STDIN as file input
+
+To use with other image types, use imagemagick: `magick convert <image> bmp:- | asciimap -i`
 
 License: MIT
