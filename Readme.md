@@ -13,3 +13,5 @@ CMDline tool to Convert 24bit Windows BitMap files to ASCII with optional ANSI-c
 To use with other image types, use imagemagick: `magick convert <image> -depth 24 bmp:- | asciimap -i`
 
 License: MIT
+
+![alt text](screenshot.png "Screenshot")
