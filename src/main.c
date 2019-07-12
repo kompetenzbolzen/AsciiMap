@@ -26,6 +26,7 @@ struct prog_param
 	unsigned int charsize_y;
 	uint8_t color;
 	uint8_t use_stdin;
+	uint8_t use_whitespace;
 };
 
 struct prog_param parse_args(int argc, char *argv[]); 
@@ -105,10 +106,16 @@ int main(int argc, char *argv[])
 
 			ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
 			if(args.color) {
-				col_buff[x][y] = calc_col_ansi(
-					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
-					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
-					(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
+				if(args.use_whitespace)
+					col_buff[x][y] = calc_bg_col_ansi(
+						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
+				else
+					col_buff[x][y] = calc_col_ansi(
+						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
 			}
 
 			if((uint8_t)ascii_buff[x][y] < b_min)
@@ -128,10 +135,12 @@ int main(int argc, char *argv[])
 		for(int x = 0; x < size_x; x++) {
 			if(args.color) 
 				printf("\e[%sm", col_buff[x][y]);
-
-			printf("%c", calc_char(ascii_buff[x][y], 0,255));//b_min, b_max));
+			if(args.use_whitespace)
+				printf(" ");
+			else
+				printf("%c", calc_char(ascii_buff[x][y], 0,255));//b_min, b_max));
 		}
-		printf("\n");
+		printf("\e[0m\n");
 	}
 
 	if(args.color)
@@ -191,6 +200,9 @@ struct prog_param parse_args(int argc, char *argv[])
 					case 'i':
 						ret.use_stdin = 1;
 						break;
+					case 'w':
+						ret.use_whitespace = 1;
+						break;
 					default:
 						printf("Unrecognized Option '%c'\n", argv[icpy][o]);
 						print_help();
@@ -226,7 +238,7 @@ void print_help( void )
 	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
 	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
-	printf("	-i: Read from STDIN instead of file.\n");
+	printf("	-i: Read from STDIN instead of file.\n	-w: print only whitespaces with background color\n");
 }
 
 

@@ -30,4 +30,5 @@ char *calc_col(uint8_t R, uint8_t G, uint8_t B);
 
 char *calc_col_ansi(uint8_t R, uint8_t G, uint8_t B);
 
+char *calc_bg_col_ansi(uint8_t R, uint8_t G, uint8_t B);
 #endif //_COLOR_H_
