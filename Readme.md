@@ -8,6 +8,8 @@ CMDline tool to Convert 24bit Windows BitMap files to ASCII with optional ANSI-c
 
 * -x <n> to average n x 2n pixels to one char
 
+* -s <n> to print n characters wide to be able to fit in terminal window, independent from picture size.
+
 * -i use STDIN as file input
 
 * -w to print whitespaces with background color instead of ASCII chars. Only useful with -c

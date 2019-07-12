@@ -27,6 +27,7 @@ struct prog_param
 	uint8_t color;
 	uint8_t use_stdin;
 	uint8_t use_whitespace;
+	uint8_t fit_width;
 };
 
 struct prog_param parse_args(int argc, char *argv[]); 
@@ -56,6 +57,13 @@ int main(int argc, char *argv[])
 
 	//x and y size of ASCII-image
 	unsigned int size_x,size_y;
+
+	if(args.fit_width > 0) {
+		args.charsize_x = bitmap.x / args.fit_width;
+		args.charsize_y = (bitmap.y / bitmap.x) * args.charsize_x * 2;
+	}
+		/*size_x = args.fit_width;
+		size_y = (unsigned int)(((float)size_x / (float)bitmap.x) * (float)bitmap.y);*/
 	size_x = bitmap.x / args.charsize_x;
 	size_y = bitmap.y / args.charsize_y;
 
@@ -174,6 +182,8 @@ struct prog_param parse_args(int argc, char *argv[])
 	ret.charsize_y = 0;
 	ret.color = 0;
 	ret.use_stdin = 0;
+	ret.use_whitespace = 0;
+	ret.fit_width = 0;
 
 	for (int i = 1; i < argc; i++) {
 		if(argv[i][0] == '-') {
@@ -202,6 +212,10 @@ struct prog_param parse_args(int argc, char *argv[])
 						break;
 					case 'w':
 						ret.use_whitespace = 1;
+						break;
+					case 's':
+						i++;
+						ret.fit_width = atoi(argv[i]);
 						break;
 					default:
 						printf("Unrecognized Option '%c'\n", argv[icpy][o]);
