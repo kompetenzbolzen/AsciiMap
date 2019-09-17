@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
 	unsigned int size_x,size_y;
 
 	if(args.fit_width > 0) {
-		args.charsize_x = bitmap.x / args.fit_width;
-		args.charsize_y = (bitmap.y / bitmap.x) * args.charsize_x * 2;
+		args.charsize_x = (unsigned int)((float)bitmap.x / (float)args.fit_width);
+		args.charsize_y = (unsigned int)(((float)bitmap.y / (float)bitmap.x) * (float)args.charsize_x * 2);
 	}
 		/*size_x = args.fit_width;
 		size_y = (unsigned int)(((float)size_x / (float)bitmap.x) * (float)bitmap.y);*/
