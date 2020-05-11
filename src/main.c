@@ -28,6 +28,7 @@ struct prog_param
 	uint8_t use_stdin;
 	uint8_t use_whitespace;
 	uint8_t fit_width;
+	uint8_t dynamic_range;
 };
 
 struct prog_param parse_args(int argc, char *argv[]); 
@@ -133,10 +134,16 @@ int main(int argc, char *argv[])
 		}//for y
 	}//for x
 
-	DEBUG_PRINTF("Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 
 	if(args.color)
 		printf("\e[0m");//Default colors
+	
+	if(! args.dynamic_range) {
+		b_min = 0;
+		b_max = 255;
+	} else {
+		DEBUG_PRINTF("Dynamic Range: Brightness Values: Min: %u Max: %u\n", b_min, b_max);
+	}
 
 	//Print buffer
 	for(int y = 0; y<size_y; y++) {
@@ -146,7 +153,7 @@ int main(int argc, char *argv[])
 			if(args.use_whitespace)
 				printf(" ");
 			else
-				printf("%c", calc_char(ascii_buff[x][y], 0,255));//b_min, b_max));
+				printf("%c", calc_char(ascii_buff[x][y], b_min, b_max));
 		}
 		printf("\e[0m\n");
 	}
@@ -177,13 +184,10 @@ struct prog_param parse_args(int argc, char *argv[])
 {
 	struct prog_param ret;
 
+	memset(&ret, 0, sizeof ret);
+
 	ret.filename = NULL;
 	ret.charsize_x = CHAR_SIZE_X;
-	ret.charsize_y = 0;
-	ret.color = 0;
-	ret.use_stdin = 0;
-	ret.use_whitespace = 0;
-	ret.fit_width = 0;
 
 	for (int i = 1; i < argc; i++) {
 		if(argv[i][0] == '-') {
@@ -216,6 +220,9 @@ struct prog_param parse_args(int argc, char *argv[])
 					case 's':
 						i++;
 						ret.fit_width = atoi(argv[i]);
+						break;
+					case 'd':
+						ret.dynamic_range = 1;
 						break;
 					default:
 						printf("Unrecognized Option '%c'\n", argv[icpy][o]);
@@ -253,6 +260,7 @@ void print_help( void )
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
 	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
 	printf("	-i: Read from STDIN instead of file.\n	-w: print only whitespaces with background color\n");
+	printf("	-d: Dynamic brightness range");
 }
 
 
