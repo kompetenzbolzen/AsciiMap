@@ -22,6 +22,7 @@
 struct prog_param
 {
 	char *filename;
+	char *character_map;
 	unsigned int charsize_x;
 	unsigned int charsize_y;
 	uint8_t color;
@@ -153,7 +154,7 @@ int main(int argc, char *argv[])
 			if(args.use_whitespace)
 				printf(" ");
 			else
-				printf("%c", calc_char(ascii_buff[x][y], b_min, b_max));
+				printf("%c", calc_char(ascii_buff[x][y], b_min, b_max, args.character_map));
 		}
 		printf("\e[0m\n");
 	}
@@ -186,7 +187,6 @@ struct prog_param parse_args(int argc, char *argv[])
 
 	memset(&ret, 0, sizeof ret);
 
-	ret.filename = NULL;
 	ret.charsize_x = CHAR_SIZE_X;
 
 	for (int i = 1; i < argc; i++) {
@@ -196,17 +196,13 @@ struct prog_param parse_args(int argc, char *argv[])
 				switch(argv[icpy][o]) {
 					case 'h':
 						print_help();
-						exit(1);
+						exit(0);
 						break;
 					case 'x':
-						DEBUG_PRINTF("x\n");
-						i++;
-						ret.charsize_x = atoi(argv[i]);
+						ret.charsize_x = atoi(argv[++i]);
 						break;
 					case 'y':
-						DEBUG_PRINTF("y\n");
-						i++;
-						ret.charsize_y = atoi(argv[i]);
+						ret.charsize_y = atoi(argv[++i]);
 						break;
 					case 'c':
 						ret.color = 1;
@@ -218,11 +214,13 @@ struct prog_param parse_args(int argc, char *argv[])
 						ret.use_whitespace = 1;
 						break;
 					case 's':
-						i++;
-						ret.fit_width = atoi(argv[i]);
+						ret.fit_width = atoi(argv[++i]);
 						break;
 					case 'd':
 						ret.dynamic_range = 1;
+						break;
+					case 'm':
+						ret.character_map = argv[++i];
 						break;
 					default:
 						printf("Unrecognized Option '%c'\n", argv[icpy][o]);
@@ -260,7 +258,7 @@ void print_help( void )
 	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
 	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
 	printf("	-i: Read from STDIN instead of file.\n	-w: print only whitespaces with background color\n");
-	printf("	-d: Dynamic brightness range");
+	printf("	-d: Dynamic brightness range\n	-m PALETTE: specify custom character palette from darkest to brightest\n");
 }
 
 
