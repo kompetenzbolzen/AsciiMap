@@ -64,19 +64,17 @@ int main(int argc, char *argv[])
 		args.charsize_x = (unsigned int)((float)bitmap.x / (float)args.fit_width);
 		args.charsize_y = (unsigned int)(((float)bitmap.y / (float)bitmap.x) * (float)args.charsize_x * 2);
 	}
-		/*size_x = args.fit_width;
-		size_y = (unsigned int)(((float)size_x / (float)bitmap.x) * (float)bitmap.y);*/
 	size_x = bitmap.x / args.charsize_x;
 	size_y = bitmap.y / args.charsize_y;
 
 	DEBUG_PRINTF("Output size: %u x %u\n", size_x, size_y);
 
-	//Where the chars are stored
+	//Allocate character sotrage
 	ascii_buff = malloc(sizeof(*ascii_buff) * size_x);
 	for (int i = 0; i < size_x; i++) 
 		ascii_buff[i] = malloc(sizeof(ascii_buff[i]) * size_y);
 
-	//Where the color is stored, if activated
+	//Allocate color storage if color enabled
 	if(args.color) {
 		col_buff = malloc(sizeof(*col_buff) * size_x);
 		for (int i = 0; i < size_x; i++)
@@ -114,6 +112,7 @@ int main(int argc, char *argv[])
 				}//for col_c
 			}//for row_c
 
+			//Calculate average color / brightness
 			ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
 			if(args.color) {
 				if(args.use_whitespace)
@@ -177,6 +176,15 @@ int main(int argc, char *argv[])
 	free(bitmap.R);
 	free(bitmap.G);
 	free(bitmap.B);
+/*
+ * 	NOTE Memory leaks bc every pixel-color is allocated as a single string.
+ * 	Since program is intended to terminate after a single run, 'free()' is left
+ * 	out for performance reasons. 
+	if(args.color) {
+		for(int i = 0; i < size_x; i++)
+			free(col_buff[i]);
+		free(col_buff);
+	}*/
 
 	return 0;
 }//main
