@@ -4,15 +4,19 @@ CMDline tool to Convert 24bit Windows BitMap files to ASCII with optional ANSI-c
 
 ### Options
 
-* -c to use ANSI 256 color-mode
+* `-c` use ANSI 256 color-mode
 
-* -x <n> to average n x 2n pixels to one char
+* `-x <n>` average n x 2n pixels to one char
 
-* -s <n> to print n characters wide to be able to fit in terminal window, independent from picture size.
+* `-s <n>` print n characters wide to be able to fit in terminal window, independent from picture size.
 
-* -i use STDIN as file input
+* `-i` use STDIN as file input
 
-* -w to print whitespaces with background color instead of ASCII chars. Only useful with -c
+* `-w` print whitespaces with background color instead of ASCII chars. Only useful with -c
+
+* `-d` activate dynamic brightness range
+
+* `-m <string>` use a custom ASCII character palette. From darkest to brightest
 
 To use with other image types, use imagemagick: `magick convert <image> -depth 24 bmp:- | asciimap -i`
 
