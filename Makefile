@@ -1,4 +1,4 @@
-CC      = /usr/bin/gcc
+CC      = clang
 CFLAGS  = -Wall
 LDFLAGS = -lm
 SOURCEDIR = src
@@ -10,9 +10,11 @@ FILE = 022.bmp
 SRCS = $(wildcard $(SOURCEDIR)/*.c)
 OBJ = $(SRCS:.c=.o)
 
+.PHONY: build
 build: $(OBJ)
-	mkdir -p $(BUILDDIR)
-	$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
+	@mkdir -p $(BUILDDIR)
+	@echo [LINK] $(OBJ)
+	@$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
 
 debug: CFLAGS+= -g -D _DEBUG
 debug: build;
