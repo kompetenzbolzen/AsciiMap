@@ -2,19 +2,24 @@ CC      = clang
 CFLAGS  = -Wall
 LDFLAGS = -lm
 SOURCEDIR = src
-OUTPUT = asciimap
 BUILDDIR = build
+OBJDIR = $(BUILDDIR)/obj
+OUTPUT = asciimap
 PREFIX = /
 
 FILE = 022.bmp
 SRCS = $(wildcard $(SOURCEDIR)/*.c)
-OBJ = $(SRCS:.c=.o)
+OBJT = $(SRCS:.c=.o)
+OBJ  = $(OBJT:$(SOURCEDIR)/%=$(OBJDIR)/%)
 
 .PHONY: build
-build: $(OBJ)
-	@mkdir -p $(BUILDDIR)
+build: dir $(OBJ)
 	@echo [LINK] $(OBJ)
 	@$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
+
+dir:
+	@mkdir -p $(OBJDIR)
+	@mkdir -p $(BUILDDIR)
 
 debug: CFLAGS+= -g -D _DEBUG
 debug: build;
@@ -22,16 +27,15 @@ debug: build;
 gdb: debug
 	gdb $(BUILDDIR)/$(OUTPUT)
 
-%.o: %.c
+$(OBJDIR)/%.o: $(SOURCEDIR)/%.c
 	@echo [ CC ] $<
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 all: clean build
 
 .PHONY: clean
-
 clean:
-	rm -df  $(OBJ)
+	rm -Rdf  $(OBJDIR)
 	rm -Rdf $(BUILDDIR)
 
 run: build

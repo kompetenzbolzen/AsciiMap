@@ -2,3 +2,4 @@
 *.bmp
 *.txt
 build/*
+obj/*
