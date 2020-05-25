@@ -1,0 +1,26 @@
+# Maintainer: Joe User <joe.user@example.com>
+
+pkgname=asciimap
+pkgver=$(date +%y%m%d)
+pkgrel=1
+pkgdesc="Create ASCII art from Bitmap Images"
+arch=('i686' 'x86_64')
+url="https://github.com/kompetenzbolzen/AsciiMap"
+license=('MIT')
+groups=()
+depends=('glibc')
+makedepends=('clang')
+optdepends=()
+source=("git+https://github.com/kompetenzbolzen/AsciiMap")
+md5sums=('SKIP')
+
+build() {
+        cd $srcdir/AsciiMap
+        make
+}
+
+package() {
+        cd $srcdir/AsciiMap
+	mkdir -p $pkgdir/usr/bin
+        make PREFIX="$pkgdir/usr/" install
+}
