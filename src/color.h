@@ -19,7 +19,7 @@ struct console_color
 	char *no;
 };
 
-struct console_color colors[ _COLORS_SIZE ];
+extern struct console_color colors[ _COLORS_SIZE ];
 
 //Calculate luminance
 //Order LSB first: BGR

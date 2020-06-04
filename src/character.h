@@ -5,7 +5,7 @@
 #include <string.h>
 
 //Both maps produce very different results
-const char *default_character_map;
+extern const char *default_character_map;
 
 //Select Char based on 1B brightness Value.
 //if _custom_map == NULL default map is used
