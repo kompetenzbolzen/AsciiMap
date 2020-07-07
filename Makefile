@@ -42,4 +42,5 @@ run: build
 	$(BUILDDIR)/$(OUTPUT) $(FILE)
 
 install: build
+	@strip $(BUILDDIR)/$(OUTPUT)
 	@cp $(BUILDDIR)/$(OUTPUT) $(PREFIX)/bin/$(OUTPUT)
