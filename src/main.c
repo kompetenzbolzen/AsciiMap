@@ -9,6 +9,8 @@
 #include "m.h"
 #include "color.h"
 
+/* #define CLEANUP 1 */
+
 #ifdef _DEBUG
 #warning "Compiling with DEBUG"
 #define DEBUG_PRINTF(...) { printf(__VA_ARGS__); }
@@ -41,15 +43,14 @@ int main(int argc, char *argv[])
 	struct prog_param args = parse_args(argc, argv);
 
 	//Stores a luminance array
-	uint8_t	**ascii_buff;
+	uint8_t	**image_monochrome;
 	//Stores a color array
 	char*	**col_buff;
 
-	uint8_t b_max = 0x00;
-	uint8_t b_min = 0xff;
+	uint8_t brightness_max = 0x00;
+	uint8_t brightness_min = 0xff;
 
 	struct bitmap_pixel_data bitmap;
-
 	bitmap = bitmap_read(args.filename);
 
 	if(bitmap.error) {
@@ -70,9 +71,9 @@ int main(int argc, char *argv[])
 	DEBUG_PRINTF("Output size: %u x %u\n", size_x, size_y);
 
 	//Allocate character sotrage
-	ascii_buff = malloc(sizeof(*ascii_buff) * size_x);
+	image_monochrome = malloc(sizeof(*image_monochrome) * size_x);
 	for (int i = 0; i < size_x; i++) 
-		ascii_buff[i] = malloc(sizeof(ascii_buff[i]) * size_y);
+		image_monochrome[i] = malloc(sizeof(image_monochrome[i]) * size_y);
 
 	//Allocate color storage if color enabled
 	if(args.color) {
@@ -90,8 +91,8 @@ int main(int argc, char *argv[])
 			/* Luminance for every pixel */
 			uint8_t brightness [ args.charsize_x ][ args.charsize_y ];
 			/* Color for every Pixel */
-			uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of Pixels, used for averaging
-			unsigned int cc_counter = 0;
+			uint8_t color_list[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of Pixels, used for averaging
+			unsigned int color_list_counter = 0;
 
 			/* Iterate through pixel block, save brightness and color if set */
 			for(unsigned int row_c = 0; row_c < args.charsize_y; row_c++) {
@@ -106,36 +107,36 @@ int main(int argc, char *argv[])
 							bitmap.B[col][row]);
 
 					if(args.color) {
-						cc[0][cc_counter] = bitmap.R[col][row];
-						cc[1][cc_counter] = bitmap.G[col][row];
-						cc[2][cc_counter] = bitmap.B[col][row];
-						cc_counter++;
+						color_list[0][color_list_counter] = bitmap.R[col][row];
+						color_list[1][color_list_counter] = bitmap.G[col][row];
+						color_list[2][color_list_counter] = bitmap.B[col][row];
+						color_list_counter++;
 					}//if
 				}//for col_c
 			}//for row_c
 
 			/* Calculate average brightness in pixel block */
-			ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
+			image_monochrome[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
 
 			/* Calculate average color in pixel block */
 			if(args.color) {
 				if(args.use_whitespace)
 					col_buff[x][y] = calc_bg_col_ansi(
-						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
-						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
-						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
+						(uint8_t)avg(args.charsize_x * args.charsize_y, color_list[0]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, color_list[1]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, color_list[2]));
 				else
 					col_buff[x][y] = calc_col_ansi(
-						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
-						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
-						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
+						(uint8_t)avg(args.charsize_x * args.charsize_y, color_list[0]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, color_list[1]),
+						(uint8_t)avg(args.charsize_x * args.charsize_y, color_list[2]));
 			} // if args.color
 
 			/* Save min and max brightness values for dynamic range */
-			if((uint8_t)ascii_buff[x][y] < b_min)
-				b_min = ascii_buff[x][y];
-			if((uint8_t)ascii_buff[x][y] > b_max)
-				b_max = ascii_buff[x][y];
+			if((uint8_t)image_monochrome[x][y] < brightness_min)
+				brightness_min = image_monochrome[x][y];
+			if((uint8_t)image_monochrome[x][y] > brightness_max)
+				brightness_max = image_monochrome[x][y];
 		}//for y
 	}//for x
 
@@ -145,10 +146,10 @@ int main(int argc, char *argv[])
 		printf("\e[0m");
 	
 	if(! args.dynamic_range) {
-		b_min = 0;
-		b_max = 255;
+		brightness_min = 0;
+		brightness_max = 255;
 	} else {
-		DEBUG_PRINTF("Dynamic Range: Brightness Values: Min: %u Max: %u\n", b_min, b_max);
+		DEBUG_PRINTF("Dynamic Range: Brightness Values: Min: %u Max: %u\n", brightness_min, brightness_max);
 	}
 
 	/* Print the buffer */
@@ -159,7 +160,7 @@ int main(int argc, char *argv[])
 			if(args.use_whitespace)
 				printf(" ");
 			else
-				printf("%c", calc_char(ascii_buff[x][y], b_min, b_max, args.character_map));
+				printf("%c", calc_char(image_monochrome[x][y], brightness_min, brightness_max, args.character_map));
 		}
 		printf("\e[0m\n");
 	}
@@ -170,10 +171,10 @@ int main(int argc, char *argv[])
 
 	DEBUG_PRINTF("Finished!\n");
 
-	/* Cleanup removed for performance
+#ifdef CLEANUP
 	for(int i = 0; i < size_x; i++)
-		free (ascii_buff[i]);
-	free(ascii_buff);
+		free (image_monochrome[i]);
+	free(image_monochrome);
 
 	for(int i = 0; i < bitmap.x; i++) {
 		free(bitmap.R[i]);
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
 			free(col_buff[i]);
 		free(col_buff);
 	}
-*/
+#endif
 
 	return 0;
 }//main
