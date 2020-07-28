@@ -1,6 +1,20 @@
+/*
+ * src/bitmap.c
+ * (c) 2020 Jonas Gunz <himself@jonasgunz.de>
+ * License: MIT
+*/
+
 #include "bitmap.h"
 
-uint32_t bitmap_flip_byte(unsigned char* _v, int _c)
+static struct bitmap_file_header bitmap_read_file_header(FILE *_file);
+
+static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header);
+
+static uint32_t bitmap_flip_byte(unsigned char* _v, int _c);
+
+static uint8_t bitmap_rgb_luminance(uint8_t R, uint8_t G, uint8_t B);
+
+static uint32_t bitmap_flip_byte(unsigned char* _v, int _c)
 {
 	uint32_t ret = 0;
 	uint32_t counter = (_c-1) * 8;
@@ -14,45 +28,43 @@ uint32_t bitmap_flip_byte(unsigned char* _v, int _c)
 	return ret;
 }//flip
 
-struct bitmap_pixel_data bitmap_read(char *_file)
+int bitmap_read(char *_file, struct bitmap_image *_bitmap)
 {
-	struct bitmap_pixel_data ret;
+	if (!_bitmap )
+		return 5;
+
 	struct bitmap_file_header header;
+	_bitmap->tags = 0x00;
 
-	ret.R = ret.G = ret.B = NULL;
-	ret.error = 1;
-
-	FILE *bitmap;
+	FILE *input_file;
 	if(_file)
-		bitmap = fopen(_file,"rb");
+		input_file = fopen(_file,"rb");
 	else
-		bitmap = stdin;
+		input_file = stdin;
 
-	if(!bitmap)
-		return ret;
+	if(!input_file)
+		return 1;
 
-	header = bitmap_read_file_header(bitmap);
+	header = bitmap_read_file_header(input_file);
 
 	if(header.error)
-		return ret;
+		return 2;
 
 	if(header.biBitCount != 24)
-		return ret;
+		return 3;
 
 	if(header.biCompression != 0)
-		return ret;
+		return 4;
 
-	ret = bitmap_read_pixel_data(bitmap, header);
-
+	*_bitmap = bitmap_read_pixel_data(input_file, header);
 
 	free(header.tables);
-	fclose(bitmap);
+	fclose(input_file);
 
-	ret.error = 0;
-	return ret;
+	return 0;
 }
 
-struct bitmap_file_header bitmap_read_file_header(FILE *_file)
+static struct bitmap_file_header bitmap_read_file_header(FILE *_file)
 {
 	struct bitmap_file_header ret;
 	unsigned char fileheader[_HEADER_SIZE];
@@ -95,11 +107,11 @@ struct bitmap_file_header bitmap_read_file_header(FILE *_file)
 	return ret;
 }
 
-struct bitmap_pixel_data bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header)
+static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header)
 {
 	uint32_t			**bitmap_buff;
 
-	struct bitmap_pixel_data ret;
+	struct bitmap_image ret;
 
 	uint32_t row_size = _header.biWidth * 3;
 	while(row_size%4)
@@ -159,6 +171,46 @@ struct bitmap_pixel_data bitmap_read_pixel_data(FILE *_file, struct bitmap_file_
 	for(int i = 0; i < ret.y; i++)
 		free(bitmap_buff[i]);
 	free(bitmap_buff);
+
+	return ret;
+}
+
+int bitmap_copy ( struct bitmap_image *_input, struct bitmap_image *_output ) {
+	return 1;
+}
+
+int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image *_output ) {
+	if ( !_input || !_output )
+		return 1;
+
+	uint8_t **monochrome_bitmap = malloc( sizeof (*monochrome_bitmap) * _input->x );
+	for ( int i = 0; i < _input->y; i++ ) {
+		monochrome_bitmap[i] = malloc ( sizeof (**monochrome_bitmap) * _input->y );
+	}
+
+	for ( unsigned int x = 0; x < _input->x; x++ ) {
+		for ( unsigned int y = 0; y < _input->y; y++ ) {
+			monochrome_bitmap[x][y] = bitmap_rgb_luminance (
+					_input->R[x][y],
+					_input->G[x][y],
+					_input->B[x][y] );
+		}
+	}
+
+	_output->R = _output->G = _output->B = monochrome_bitmap;
+
+	return 0;
+}
+
+int bitmap_transform ( struct bitmap_image *_input, struct bitmap_image *_output ) {
+	return 1;
+}
+
+static uint8_t bitmap_rgb_luminance(uint8_t R, uint8_t G, uint8_t B)
+{
+	uint8_t ret;
+
+	ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
 
 	return ret;
 }

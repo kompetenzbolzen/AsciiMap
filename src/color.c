@@ -63,6 +63,7 @@ char* calc_col(uint8_t R, uint8_t G, uint8_t B)
 	}
 	return colors[ nearest_num ].no;
 }
+//TODO consolidate
 char* calc_col_ansi(uint8_t R, uint8_t G, uint8_t B)
 {
 	int num = 36 * (R/51) + 6 * (G/51) + (B/51);

@@ -1,3 +1,9 @@
+/*
+ * src/main.c
+ * (c) 2020 Jonas Gunz <himself@jonasgunz.de>
+ * License: MIT
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,7 +15,7 @@
 #include "m.h"
 #include "color.h"
 
-/* #define CLEANUP 1 */
+// #define CLEANUP 1
 
 #ifdef _DEBUG
 #warning "Compiling with DEBUG"
@@ -50,10 +56,8 @@ int main(int argc, char *argv[])
 	uint8_t brightness_max = 0x00;
 	uint8_t brightness_min = 0xff;
 
-	struct bitmap_pixel_data bitmap;
-	bitmap = bitmap_read(args.filename);
-
-	if(bitmap.error) {
+	struct bitmap_image bitmap;
+	if ( bitmap_read(args.filename, &bitmap) ) {
 		printf("Error reading file\n");
 		return 1;
 	}
@@ -172,6 +176,7 @@ int main(int argc, char *argv[])
 	DEBUG_PRINTF("Finished!\n");
 
 #ifdef CLEANUP
+#warning "Cleanup included"
 	for(int i = 0; i < size_x; i++)
 		free (image_monochrome[i]);
 	free(image_monochrome);

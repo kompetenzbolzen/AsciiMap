@@ -1,9 +1,16 @@
+/*
+ * src/bitmap.h
+ * (c) 2020 Jonas Gunz <himself@jonasgunz.de>
+ * License: MIT
+*/
+
 #ifndef _BITMAP_H_
 #define _BITMAP_H_
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define _HEADER_SIZE 54 //Fileheader + infoheader
 #define IDENTIFIER 0x424d //BM BitMap identifier
@@ -26,45 +33,46 @@
 #define G(x) (0x00ff00 & x) >> 8
 #define B(x) (0x0000ff & x)
 
+#define BITMAP_MONOCHROME 0x01
+
 struct bitmap_file_header
 {
-  uint8_t error;
+	uint8_t error;
 
-  uint16_t bfType;
-  uint32_t bfSize;
-  uint32_t bfOffBits;
+	uint16_t bfType;
+	uint32_t bfSize;
+	uint32_t bfOffBits;
 
-  uint32_t biSize;
-  int32_t  biWidth;
-  int32_t  biHeight;
-  uint16_t biBitCount;
-  uint32_t biCompression;
-  uint32_t biSizeImage;
-  uint32_t biClrUsed;
-  uint32_t biClrImportant;
+	uint32_t biSize;
+	int32_t  biWidth;
+	int32_t  biHeight;
+	uint16_t biBitCount;
+	uint32_t biCompression;
+	uint32_t biSizeImage;
+	uint32_t biClrUsed;
+	uint32_t biClrImportant;
 
-  unsigned char *tables;
-  uint32_t      tablesc;
+	unsigned char *tables;
+	uint32_t      tablesc;
 };
 
-struct bitmap_pixel_data
+struct bitmap_image
 {
-  unsigned int x,y;
-  uint8_t **R;
-  uint8_t **G;
-  uint8_t **B;
+	unsigned int x,y;
 
-  uint8_t error;
+	uint8_t **R;
+	uint8_t **G;
+	uint8_t **B;
+
+	uint8_t tags;
 };
 
+int bitmap_read ( char *_file, struct bitmap_image *_bitmap );
 
-uint32_t bitmap_flip_byte(unsigned char* _v, int _c);
+int bitmap_copy ( struct bitmap_image *_input, struct bitmap_image *_output );
 
-struct bitmap_pixel_data bitmap_read(char *_file);
+int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image *_output );
 
-struct bitmap_file_header bitmap_read_file_header(FILE *_file);
-
-struct bitmap_pixel_data bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header);
-
+int bitmap_transform ( struct bitmap_image *_input, struct bitmap_image *_output );
 
 #endif /* end of include guard: _BITMAP_H_ */
