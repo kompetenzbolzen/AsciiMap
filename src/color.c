@@ -19,7 +19,7 @@ struct console_color colors[] = { //Standard VGA colors
 	{255, 255, 255,	"37;1"}
 };
 
-uint8_t rgb_avg(uint8_t R, uint8_t G, uint8_t B)
+uint8_t rgb_luminance(uint8_t R, uint8_t G, uint8_t B)
 {
 	uint8_t ret;
 

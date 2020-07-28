@@ -23,7 +23,7 @@ extern struct console_color colors[ _COLORS_SIZE ];
 
 //Calculate luminance
 //Order LSB first: BGR
-uint8_t rgb_avg(uint8_t R, uint8_t G, uint8_t B);
+uint8_t rgb_luminance(uint8_t R, uint8_t G, uint8_t B);
 
 //Get nearest printable color in console
 char *calc_col(uint8_t R, uint8_t G, uint8_t B);

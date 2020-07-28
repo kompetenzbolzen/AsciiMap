@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	//x and y size of ASCII-image
+	// Character count in x and y in final ASCII image
 	unsigned int size_x,size_y;
 
 	if(args.fit_width > 0) {
@@ -87,18 +87,20 @@ int main(int argc, char *argv[])
 	//For every size_x * size_y block: calculate average values of pixel blocks
 	for(unsigned int x = 0; x < size_x; x++) {
 		for(unsigned int y = 0; y < size_y; y++) {
-			uint8_t brightness [ args.charsize_x ][ args.charsize_y ]; //Average brightness of every pixel
-			uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of Pixels
+			/* Luminance for every pixel */
+			uint8_t brightness [ args.charsize_x ][ args.charsize_y ];
+			/* Color for every Pixel */
+			uint8_t cc[ 3 ][ args.charsize_x * args.charsize_y ]; //RGB Values of Pixels, used for averaging
 			unsigned int cc_counter = 0;
 
-			//Iterate through Pixel block
+			/* Iterate through pixel block, save brightness and color if set */
 			for(unsigned int row_c = 0; row_c < args.charsize_y; row_c++) {
 				unsigned int row = y * args.charsize_y + row_c; //Actual position in Bitmap
 
 				for(unsigned int col_c = 0; col_c < args.charsize_x; col_c++) {
 					unsigned int col = x * args.charsize_x + col_c; //Actual position in bitmap
 
-					brightness[col_c][row_c] = rgb_avg(
+					brightness[col_c][row_c] = rgb_luminance(
 							bitmap.R[col][row],
 							bitmap.G[col][row],
 							bitmap.B[col][row]);
@@ -112,8 +114,10 @@ int main(int argc, char *argv[])
 				}//for col_c
 			}//for row_c
 
-			//Calculate average color / brightness
+			/* Calculate average brightness in pixel block */
 			ascii_buff[x][y] = avg(args.charsize_x * args.charsize_y, *brightness);
+
+			/* Calculate average color in pixel block */
 			if(args.color) {
 				if(args.use_whitespace)
 					col_buff[x][y] = calc_bg_col_ansi(
@@ -125,8 +129,9 @@ int main(int argc, char *argv[])
 						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[0]),
 						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[1]),
 						(uint8_t)avg(args.charsize_x * args.charsize_y, cc[2]));
-			}
+			} // if args.color
 
+			/* Save min and max brightness values for dynamic range */
 			if((uint8_t)ascii_buff[x][y] < b_min)
 				b_min = ascii_buff[x][y];
 			if((uint8_t)ascii_buff[x][y] > b_max)
@@ -135,8 +140,9 @@ int main(int argc, char *argv[])
 	}//for x
 
 
+	/* Apply Default Colors */
 	if(args.color)
-		printf("\e[0m");//Default colors
+		printf("\e[0m");
 	
 	if(! args.dynamic_range) {
 		b_min = 0;
@@ -145,7 +151,7 @@ int main(int argc, char *argv[])
 		DEBUG_PRINTF("Dynamic Range: Brightness Values: Min: %u Max: %u\n", b_min, b_max);
 	}
 
-	//Print buffer
+	/* Print the buffer */
 	for(int y = 0; y<size_y; y++) {
 		for(int x = 0; x < size_x; x++) {
 			if(args.color) 
@@ -158,12 +164,13 @@ int main(int argc, char *argv[])
 		printf("\e[0m\n");
 	}
 
+	/* Apply Default Colors */
 	if(args.color)
-		printf("\e[0m");//Default colors
+		printf("\e[0m");
 
 	DEBUG_PRINTF("Finished!\n");
 
-	//Cleanup
+	/* Cleanup removed for performance
 	for(int i = 0; i < size_x; i++)
 		free (ascii_buff[i]);
 	free(ascii_buff);
@@ -176,15 +183,12 @@ int main(int argc, char *argv[])
 	free(bitmap.R);
 	free(bitmap.G);
 	free(bitmap.B);
-/*
- * 	NOTE Memory leaks bc every pixel-color is allocated as a single string.
- * 	Since program is intended to terminate after a single run, 'free()' is left
- * 	out for performance reasons. 
 	if(args.color) {
 		for(int i = 0; i < size_x; i++)
 			free(col_buff[i]);
 		free(col_buff);
-	}*/
+	}
+*/
 
 	return 0;
 }//main
