@@ -12,7 +12,6 @@
 
 #include "bitmap.h"
 #include "character.h"
-#include "m.h"
 #include "color.h"
 
 #ifdef _DEBUG
@@ -52,8 +51,6 @@ int main(int argc, char *argv[])
 
 	uint8_t brightness_min = 0x00;
 	uint8_t brightness_max = 0xff;
-
-	int size_x, size_y;
 
 	if ( bitmap_read(args.filename, &bitmap) ) {
 		printf("Error reading file\n");

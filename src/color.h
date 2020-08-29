@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "m.h"
-
 #define _COLORS_SIZE	16u
 #define COLOR_FG	1
 #define COLOR_BG	2
@@ -27,10 +25,5 @@ extern struct console_color colors[ _COLORS_SIZE ];
 //Order LSB first: BGR
 uint8_t rgb_luminance(uint8_t R, uint8_t G, uint8_t B);
 
-//Get nearest printable color in console
-char *calc_col(uint8_t R, uint8_t G, uint8_t B);
-
 char *calc_col_ansi(uint8_t R, uint8_t G, uint8_t B, uint8_t _mode);
-
-char *calc_bg_col_ansi(uint8_t R, uint8_t G, uint8_t B);
 #endif //_COLOR_H_

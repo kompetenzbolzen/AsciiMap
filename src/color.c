@@ -28,42 +28,6 @@ uint8_t rgb_luminance(uint8_t R, uint8_t G, uint8_t B)
 	return ret;
 }
 
-char* calc_col(uint8_t R, uint8_t G, uint8_t B)
-{
-	unsigned int nearest_num = 0;
-	uint8_t a2[3];
-	a2[0] = colors[0].R;
-	a2[1] = colors[0].G; 
-	a2[2] = colors[0].B;
-
-	uint8_t a1[] = {R,G,B};
-
-	//Normalize the color
-	//Does not really work all that well
-	/*while(a1[0] < 255 && a1[1] < 255 && a1[2] < 255)
-	{
-		a1[0]++;
-		a1[1]++;
-		a1[2]++;
-	}*/
-
-	float nearest_val = distance( a1, a2 );
-	
-	for( unsigned int i = 1; i < _COLORS_SIZE; i++)
-	{
-		a2[0] = colors[i].R;
-		a2[1] = colors[i].G; 
-		a2[2] = colors[i].B;
-
-		float dist = distance(a1, a2);
-		if(dist < nearest_val){
-			nearest_num = i;
-			nearest_val = dist;
-		}
-	}
-	return colors[ nearest_num ].no;
-}
-//TODO consolidate
 char* calc_col_ansi(uint8_t R, uint8_t G, uint8_t B, uint8_t _mode)
 {
 	int mode = _mode == COLOR_BG ? 4 : 3;
@@ -71,15 +35,6 @@ char* calc_col_ansi(uint8_t R, uint8_t G, uint8_t B, uint8_t _mode)
 	char *c = malloc(12);
 	snprintf( c, 8, "\e[%i8;5;", mode );
 	snprintf( c + 7, 5, "%im", num + 16 );
-
-	return c;
-}
-char* calc_bg_col_ansi(uint8_t R, uint8_t G, uint8_t B)
-{
-	int num = 36 * (R/51) + 6 * (G/51) + (B/51);
-	char *c = malloc(9);
-	snprintf( c, 6, "48;5;" );
-	snprintf( c + 5, 4, "%i", num + 16 );
 
 	return c;
 }
