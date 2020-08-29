@@ -1,5 +1,4 @@
-/*
- * src/bitmap.h
+/* * src/bitmap.h
  * (c) 2020 Jonas Gunz <himself@jonasgunz.de>
  * License: MIT
 */
@@ -11,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "dynalloc.h"
 
 #define _HEADER_SIZE 54 //Fileheader + infoheader
 #define IDENTIFIER 0x424d //BM BitMap identifier
@@ -65,6 +66,8 @@ struct bitmap_image
 	uint8_t **B;
 
 	uint8_t tags;
+	uint8_t monochrome_maximum_brightness;
+	uint8_t monochrome_minimum_brightness;
 };
 
 int bitmap_read ( char *_file, struct bitmap_image *_bitmap );
@@ -73,6 +76,8 @@ int bitmap_copy ( struct bitmap_image *_input, struct bitmap_image *_output );
 
 int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image *_output );
 
-int bitmap_transform ( struct bitmap_image *_input, struct bitmap_image *_output );
+int bitmap_shrink ( struct bitmap_image *_input, struct bitmap_image *_output, unsigned int _factor_x, unsigned int _factor_y );
+
+int bitmap_fit_to_width ( struct bitmap_image *_input, struct bitmap_image *_output, unsigned int _width );
 
 #endif /* end of include guard: _BITMAP_H_ */

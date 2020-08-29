@@ -30,7 +30,7 @@ static uint32_t bitmap_flip_byte(unsigned char* _v, int _c)
 
 int bitmap_read(char *_file, struct bitmap_image *_bitmap)
 {
-	if (!_bitmap )
+	if ( !_bitmap )
 		return 5;
 
 	struct bitmap_file_header header;
@@ -176,6 +176,7 @@ static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_fil
 }
 
 int bitmap_copy ( struct bitmap_image *_input, struct bitmap_image *_output ) {
+	// TODO implement
 	return 1;
 }
 
@@ -183,10 +184,7 @@ int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image
 	if ( !_input || !_output )
 		return 1;
 
-	uint8_t **monochrome_bitmap = malloc( sizeof (*monochrome_bitmap) * _input->x );
-	for ( int i = 0; i < _input->y; i++ ) {
-		monochrome_bitmap[i] = malloc ( sizeof (**monochrome_bitmap) * _input->y );
-	}
+	uint8_t **monochrome_bitmap = (uint8_t**) dynalloc_2d_array( _input->x, _input->y, sizeof(uint8_t));
 
 	for ( unsigned int x = 0; x < _input->x; x++ ) {
 		for ( unsigned int y = 0; y < _input->y; y++ ) {
@@ -198,16 +196,69 @@ int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image
 	}
 
 	_output->R = _output->G = _output->B = monochrome_bitmap;
+	_output->tags = BITMAP_MONOCHROME;
+	_output->x = _input->x;
+	_output->y = _input->y;
+	//TODO min/max brightness
 
 	return 0;
 }
 
-int bitmap_transform ( struct bitmap_image *_input, struct bitmap_image *_output ) {
-	return 1;
+int bitmap_shrink ( struct bitmap_image *_input, struct bitmap_image *_output, unsigned int _factor_x, unsigned int _factor_y ) {
+	if ( !_input || !_output )
+		return 1;
+
+	/* New Size */
+	_output->x = _input->x / _factor_x;
+	_output->y = _input->y / _factor_y;
+	_output->tags = _input->tags;
+
+	/* Allocate memory */
+	if ( _input->tags & BITMAP_MONOCHROME ) {
+		_output->R = _output->G = _output->B =
+			(uint8_t**) dynalloc_2d_array ( _output->x, _output->y, sizeof ( uint8_t) );
+	} else {
+		_output->R = (uint8_t**) dynalloc_2d_array ( _output->x, _output->y, sizeof ( uint8_t) );
+		_output->G = (uint8_t**) dynalloc_2d_array ( _output->x, _output->y, sizeof ( uint8_t) );
+		_output->B = (uint8_t**) dynalloc_2d_array ( _output->x, _output->y, sizeof ( uint8_t) );
+	}
+
+	for(unsigned int x = 0; x < _output->x; x++) {
+		for(unsigned int y = 0; y < _output->y; y++) {
+			// Unsafe for > 2^56 Pixels (Hopefully unrealistic)
+			uint64_t color_sum[3] = {0,0,0};
+			const uint64_t pixel_count = _factor_x * _factor_y;
+
+			// Average Pixel block
+			for(unsigned int row_c = 0; row_c < _factor_y; row_c++) {
+				unsigned int row = y * _factor_y + row_c; //Offset
+
+				for(unsigned int col_c = 0; col_c < _factor_x; col_c++) {
+					unsigned int col = x * _factor_x + col_c; //Offset
+
+					color_sum[0] += (uint64_t) _input->R[col][row];
+					color_sum[1] += (uint64_t) _input->G[col][row];
+					color_sum[2] += (uint64_t) _input->B[col][row];
+				}//for col_c
+			}//for row_c
+
+			_output->R[x][y] = (uint8_t) (color_sum[0] / pixel_count);
+			_output->G[x][y] = (uint8_t) (color_sum[1] / pixel_count);
+			_output->B[x][y] = (uint8_t) (color_sum[2] / pixel_count);
+		}//for y
+	}//for x
+
+	return 0;
 }
 
-static uint8_t bitmap_rgb_luminance(uint8_t R, uint8_t G, uint8_t B)
-{
+int bitmap_fit_to_width ( struct bitmap_image *_input, struct bitmap_image *_output, unsigned int _width ) {
+	unsigned int factor_x = (unsigned int)((float)_input->x / (float) _width );
+	unsigned int factor_y = (unsigned int)(((float)_input->y / (float)_input->x ) * (float) factor_x * 2);
+
+	return bitmap_shrink ( _input, _output, factor_x, factor_y );
+}
+
+static uint8_t bitmap_rgb_luminance(uint8_t R, uint8_t G, uint8_t B) {
 	uint8_t ret;
 
 	ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
