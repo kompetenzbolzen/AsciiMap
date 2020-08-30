@@ -12,7 +12,6 @@
 
 #include "bitmap.h"
 #include "character.h"
-#include "color.h"
 
 #ifdef _DEBUG
 #warning "Compiling with DEBUG"
@@ -186,5 +185,4 @@ void print_help( void )
 	printf("	-i: Read from STDIN instead of file.\n	-w: print only whitespaces with background color\n");
 	printf("	-d: Dynamic brightness range\n	-m PALETTE: specify custom character palette from darkest to brightest\n");
 }
-
 
