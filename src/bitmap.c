@@ -6,6 +6,15 @@
 
 #include "bitmap.h"
 
+static const int   bitmap_errors_cnt = 5;
+static const char* bitmap_errors[] = {
+	"OK.",
+	"Error opening file.", // Use errno instead
+	"Invalid or corrupted file.",
+	"Unsupported bit depth.",
+	"Compression not supported."
+};
+
 static struct bitmap_file_header bitmap_read_file_header(FILE *_file);
 
 static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header);
@@ -264,4 +273,11 @@ static uint8_t bitmap_rgb_luminance(uint8_t R, uint8_t G, uint8_t B) {
 	ret = sqrt( 0.299*pow(R,2) + 0.587*pow(G,2) + 0.114*pow(B,2) ); //(char)(R+R+B+G+G+G)/6;
 
 	return ret;
+}
+
+char* bitmap_strerror( int _error ) {
+	if ( _error >= bitmap_errors_cnt || _error < 0)
+		return "Unknown Error.";
+
+	return (char*) bitmap_errors[_error];
 }

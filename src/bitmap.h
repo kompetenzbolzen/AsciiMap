@@ -80,4 +80,6 @@ int bitmap_shrink ( struct bitmap_image *_input, struct bitmap_image *_output, u
 
 int bitmap_fit_to_width ( struct bitmap_image *_input, struct bitmap_image *_output, unsigned int _width );
 
+char* bitmap_strerror( int _error );
+
 #endif /* end of include guard: _BITMAP_H_ */

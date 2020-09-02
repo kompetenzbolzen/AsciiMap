@@ -51,9 +51,10 @@ int main(int argc, char *argv[])
 	uint8_t brightness_min = 0x00;
 	uint8_t brightness_max = 0xff;
 
-	if ( bitmap_read(args.filename, &bitmap) ) {
-		printf("Error reading file\n");
-		return 1;
+	int ret = bitmap_read(args.filename, &bitmap);
+	if ( ret ) {
+		printf( "%s\n", bitmap_strerror(ret) );
+		return ret;
 	}
 
 	if(args.fit_width > 0) {
