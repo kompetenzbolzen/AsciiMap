@@ -38,7 +38,7 @@ struct prog_param
 
 struct prog_param parse_args(int argc, char *argv[]); 
 
-void print_help( void );
+void print_help( char* _argv_0 );
 
 int main(int argc, char *argv[])
 {
@@ -114,7 +114,7 @@ struct prog_param parse_args(int argc, char *argv[])
 			for(int o = 1; o < strlen(argv[icpy]); o++) {
 				switch(argv[icpy][o]) {
 					case 'h':
-						print_help();
+						print_help( argv[0] );
 						exit(0);
 						break;
 					case 'x':
@@ -143,7 +143,7 @@ struct prog_param parse_args(int argc, char *argv[])
 						break;
 					default:
 						printf("Unrecognized Option '%c'\n", argv[icpy][o]);
-						print_help();
+						print_help( argv[0] );
 						exit(1);
 				};//switch
 			}//for o
@@ -152,7 +152,7 @@ struct prog_param parse_args(int argc, char *argv[])
 			ret.filename = argv[i];
 		} else {
 			printf("Wrong number of arguments\n");
-			print_help();
+			print_help( argv[0] );
 			exit(1);
 		}
 	}//for i
@@ -160,13 +160,13 @@ struct prog_param parse_args(int argc, char *argv[])
 	if(ret.filename == NULL && !ret.use_stdin )
 	{
 		printf("No input file. Use -i to read from stdin\n");
-		print_help();
+		print_help( argv[0] );
 		exit(1);
 	}
 
 	if(ret.use_whitespace && !ret.color) {
 		printf("use -w only with -c\n");
-		print_help();
+		print_help( argv[0] );
 		exit(1);
 	}
 
@@ -176,13 +176,23 @@ struct prog_param parse_args(int argc, char *argv[])
 	return ret;
 }
 
-void print_help( void )
+void print_help( char* _argv_0 )
 {
-	printf("ASCIIMap\n(c) 2019 Jonas Gunz, github.com/kompetenzbolzen/AsciiMap\n");
-	printf("ASCIIMap prints a ASCII representation of a bitmap image\n\nUsage: [OPTIONS] FILENAME\n");
-	printf("Options:\n	-h: Print this help message\n	-x VAL: set the width of block wich makes up one character. Default: %i\n", CHAR_SIZE_X);
-	printf("	-y VAL: set the height of block wich makes up one character. Default: 2*x\n	-c: Print in ANSI color mode. Default: OFF\n");
-	printf("	-i: Read from STDIN instead of file.\n	-w: print only whitespaces with background color\n");
-	printf("	-d: Dynamic brightness range\n	-m PALETTE: specify custom character palette from darkest to brightest\n");
+	printf(
+		"ASCIIMap\n"
+		"(c) 2019 Jonas Gunz, github.com/kompetenzbolzen/AsciiMap\n"
+		"ASCIIMap prints a ASCII representation of a bitmap image\n\n"
+		"Usage: %s [OPTIONS] FILENAME\n"
+		"Options:\n"
+		"	-h: Print this help message\n"
+		"	-x VAL: set the width of block wich makes up one character. Default: %i\n"
+		"	-y VAL: set the height of block wich makes up one character. Default: 2*x\n"
+		"	-c: Print in ANSI color mode. Default: OFF\n"
+		"	-i: Read from STDIN instead of file.\n"
+		"	-w: print only whitespaces with background color\n"
+		"	-d: Dynamic brightness range\n	-m PALETTE: specify custom character palette from darkest to brightest\n",
+		_argv_0,
+		CHAR_SIZE_X
+	);
 }
 
