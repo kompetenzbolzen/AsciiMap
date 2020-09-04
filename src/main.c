@@ -191,7 +191,8 @@ void print_help( char* _argv_0 )
 		"	-c: Print in ANSI color mode. Default: OFF\n"
 		"	-i: Read from STDIN instead of file.\n"
 		"	-w: print only whitespaces with background color\n"
-		"	-d: Dynamic brightness range\n	-m PALETTE: specify custom character palette from darkest to brightest\n",
+		"	-d: Dynamic brightness range\n"
+		"	-m PALETTE: specify custom character palette from darkest to brightest\n",
 		_argv_0,
 		CHAR_SIZE_X
 	);

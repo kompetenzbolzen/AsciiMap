@@ -193,6 +193,8 @@ int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image
 	if ( !_input || !_output )
 		return 1;
 
+	uint8_t min_brightness = 0xff;
+	uint8_t max_brightness = 0x00;
 	uint8_t **monochrome_bitmap = (uint8_t**) dynalloc_2d_array( _input->x, _input->y, sizeof(uint8_t));
 
 	for ( unsigned int x = 0; x < _input->x; x++ ) {
@@ -201,6 +203,11 @@ int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image
 					_input->R[x][y],
 					_input->G[x][y],
 					_input->B[x][y] );
+
+			if (monochrome_bitmap[x][y] > max_brightness)
+				max_brightness = monochrome_bitmap[x][y];
+			if (monochrome_bitmap[x][y] < min_brightness)
+				min_brightness = monochrome_bitmap[x][y];
 		}
 	}
 
@@ -208,7 +215,8 @@ int bitmap_convert_monochrome ( struct bitmap_image *_input, struct bitmap_image
 	_output->tags = BITMAP_MONOCHROME;
 	_output->x = _input->x;
 	_output->y = _input->y;
-	//TODO min/max brightness
+	_output->monochrome_maximum_brightness = max_brightness;
+	_output->monochrome_minimum_brightness = min_brightness;
 
 	return 0;
 }
