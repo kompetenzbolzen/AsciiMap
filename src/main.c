@@ -23,8 +23,7 @@
 #define CHAR_SIZE_X 2 //How many pixels should form one ASCII char?
 #define CHAR_SIZE_Y (2 * CHAR_SIZE_X)
 
-struct prog_param
-{
+struct prog_param {
 	char *filename;
 	char *character_map;
 	unsigned int charsize_x;
@@ -40,8 +39,7 @@ struct prog_param parse_args(int argc, char *argv[]);
 
 void print_help( char* _argv_0 );
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	struct prog_param args = parse_args(argc, argv);
 
 	struct bitmap_image bitmap;
@@ -101,8 +99,7 @@ int main(int argc, char *argv[])
 	return 0;
 }//main
 
-struct prog_param parse_args(int argc, char *argv[])
-{
+struct prog_param parse_args(int argc, char *argv[]) {
 	struct prog_param ret;
 
 	memset(&ret, 0, sizeof ret);
@@ -177,8 +174,7 @@ struct prog_param parse_args(int argc, char *argv[])
 	return ret;
 }
 
-void print_help( char* _argv_0 )
-{
+void print_help( char* _argv_0 ) {
 	printf(
 		"ASCIIMap\n"
 		"(c) 2019 Jonas Gunz, github.com/kompetenzbolzen/AsciiMap\n"

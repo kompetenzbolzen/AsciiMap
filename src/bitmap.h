@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
+#include <errno.h>
 
 #include "dynalloc.h"
 
@@ -36,8 +38,7 @@
 
 #define BITMAP_MONOCHROME 0x01
 
-struct bitmap_file_header
-{
+struct bitmap_file_header {
 	uint8_t error;
 
 	uint16_t bfType;
@@ -57,8 +58,7 @@ struct bitmap_file_header
 	uint32_t      tablesc;
 };
 
-struct bitmap_image
-{
+struct bitmap_image {
 	unsigned int x,y;
 
 	uint8_t **R;

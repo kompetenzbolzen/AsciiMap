@@ -28,8 +28,7 @@ static uint32_t bitmap_flip_byte(unsigned char* _v, int _c)
 	uint32_t ret = 0;
 	uint32_t counter = (_c-1) * 8;
 
-	for(int i = 0; i < _c; i++)
-	{
+	for(int i = 0; i < _c; i++) {
 		ret |= (uint32_t)(_v[i] << (counter));
 		counter -= 8;
 	}
@@ -46,10 +45,7 @@ int bitmap_read(char *_file, struct bitmap_image *_bitmap)
 	_bitmap->tags = 0x00;
 
 	FILE *input_file;
-	if(_file)
-		input_file = fopen(_file,"rb");
-	else
-		input_file = stdin;
+	input_file = _file ? fopen(_file,"rb") : stdin;
 
 	if(!input_file)
 		return 1;
@@ -73,11 +69,10 @@ int bitmap_read(char *_file, struct bitmap_image *_bitmap)
 	return 0;
 }
 
-static struct bitmap_file_header bitmap_read_file_header(FILE *_file)
-{
+static struct bitmap_file_header bitmap_read_file_header(FILE *_file) {
 	struct bitmap_file_header ret;
 	unsigned char fileheader[_HEADER_SIZE];
-	uint32_t			read_counter = 0;
+	uint32_t read_counter = 0;
 
 	ret.error = 1;
 
@@ -116,9 +111,8 @@ static struct bitmap_file_header bitmap_read_file_header(FILE *_file)
 	return ret;
 }
 
-static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header)
-{
-	uint32_t			**bitmap_buff;
+static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_file_header _header) {
+	uint32_t **bitmap_buff;
 
 	struct bitmap_image ret;
 
@@ -141,8 +135,7 @@ static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_fil
 	}
 
 	//Copy Bitmap into bitmap_buff
-	for(int row = 0; row < _header.biHeight; row++)
-	{
+	for(int row = 0; row < _header.biHeight; row++) {
 		//printf("Row %i\n", row);
 		//fread(bitmap_buff[row], sizeof(char), row_size, bitmap);
 		for(int col = 0; col < _header.biWidth; col++)
@@ -158,17 +151,14 @@ static struct bitmap_image bitmap_read_pixel_data(FILE *_file, struct bitmap_fil
 	ret.R = malloc(sizeof(*ret.R) * ret.x);
 	ret.G = malloc(sizeof(*ret.G) * ret.x);
 	ret.B = malloc(sizeof(*ret.B) * ret.x);
-	for(int i = 0; i < ret.x; i++)
-	{
+	for(int i = 0; i < ret.x; i++) {
 		ret.R[i] = malloc(sizeof(*ret.R[i]) * ret.y);
 		ret.G[i] = malloc(sizeof(*ret.G[i]) * ret.y);
 		ret.B[i] = malloc(sizeof(*ret.B[i]) * ret.y);
 	}
 
-	for(int y = 0; y < ret.y; y++)
-	{
-		for(int x = 0; x < ret.x; x++)
-		{
+	for(int y = 0; y < ret.y; y++) {
+		for(int x = 0; x < ret.x; x++) {
 			int row = _header.biHeight > 0 ? (ret.y - 1) - y : y;
 
 			ret.R[x][y] = (bitmap_buff[row][x] & 0xff0000)>>16;
@@ -286,6 +276,8 @@ static uint8_t bitmap_rgb_luminance(uint8_t R, uint8_t G, uint8_t B) {
 char* bitmap_strerror( int _error ) {
 	if ( _error >= bitmap_errors_cnt || _error < 0)
 		return "Unknown Error.";
+	if ( _error == 1 )
+		return strerror(errno);
 
 	return (char*) bitmap_errors[_error];
 }
